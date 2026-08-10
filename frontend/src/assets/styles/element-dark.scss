@@ -1,0 +1,943 @@
+// ============================================================
+// Element Plus 暗色主题覆盖（GitHub Dark 色板）
+// 使用 :root.dark 选择器（特异性 0,2,0）确保覆盖优先级高于官方 dark/css-vars.css 的 html.dark（0,1,1）
+// 必须在 main.ts 中引入 element-plus/theme-chalk/dark/css-vars.css + index.html 的 <html class="dark">
+// ============================================================
+@use './variables.scss' as *;
+
+// ============================================================
+// 【改造说明】新增浅色主题 Element Plus 变量调校（:root，默认主题）
+// 浅色下 Element Plus 官方浅色主题本就正确，仅微调主色为商务蓝 #2563eb 及其衍生色阶；
+// 暗色覆盖仍由下方 :root.dark 承担（特异性 0,2,0 > html.dark 的 0,1,1）
+// ============================================================
+:root {
+  // 主色：商务蓝 #2563eb 及其与白色的混合色阶（hover / active / 背景态）
+  --el-color-primary: #2563eb;
+  --el-color-primary-light-3: #6692f1;
+  --el-color-primary-light-5: #92b1f5;
+  --el-color-primary-light-7: #bdd2fa;
+  --el-color-primary-light-8: #d3e2fc;
+  --el-color-primary-light-9: #e9f1fe;
+  --el-color-primary-dark-2: #1d4fbc;
+
+  // 功能色对齐商务色板（低饱和，避免刺眼）
+  --el-color-success: #16a34a;
+  --el-color-warning: #d97706;
+  --el-color-danger: #dc2626;
+  --el-color-error: #dc2626;
+  --el-color-info: #6b7280;
+
+  // 圆角统一
+  --el-border-radius-base: 6px;
+  --el-border-radius-small: 4px;
+}
+
+// :root.dark 特异性 (0,2,0) > html.dark (0,1,1)，确保 GitHub Dark 色板覆盖官方暗色值
+:root.dark {
+  // 主色
+  --el-color-primary: #{$gh-link};
+  --el-color-primary-light-3: #{$gh-link};
+  --el-color-primary-light-5: #{$gh-link};
+  --el-color-primary-light-7: #{$gh-link};
+  --el-color-primary-light-8: #{$gh-link};
+  --el-color-primary-light-9: #{$gh-accent-soft};
+
+  // 功能色（覆盖官方暗色值，对齐 GitHub Dark 色板）
+  --el-color-success: #{$gh-success};
+  --el-color-warning: #{$gh-warning};
+  --el-color-danger: #{$gh-danger};
+  --el-color-error: #{$gh-danger};
+  --el-color-info: #{$gh-text-secondary};
+
+  // 背景
+  --el-bg-color: #{$gh-bg-secondary};
+  --el-bg-color-page: #{$gh-bg};
+  --el-bg-color-overlay: #{$gh-bg-tertiary};
+
+  // 文字
+  --el-text-color-primary: #{$gh-text};
+  --el-text-color-regular: #{$gh-text};
+  --el-text-color-secondary: #{$gh-text-secondary};
+  --el-text-color-placeholder: #{$gh-text-placeholder};
+  --el-text-color-disabled: #{$gh-text-placeholder};
+
+  // 边框
+  --el-border-color: #{$gh-border};
+  --el-border-color-light: #{$gh-border};
+  --el-border-color-lighter: #{$gh-border-muted};
+  --el-border-color-extra-light: #{$gh-border-muted};
+  --el-border-color-dark: #{$gh-border};
+  --el-border-color-darker: #{$gh-border};
+
+  // 填充
+  --el-fill-color: #{$gh-bg-tertiary};
+  --el-fill-color-light: #{$gh-bg-tertiary};
+  --el-fill-color-lighter: #{$gh-bg-secondary};
+  --el-fill-color-blank: #{$gh-bg};
+  --el-fill-color-dark: #{$gh-bg-tertiary};
+  --el-fill-color-darker: #{$gh-border};
+
+  // 阴影
+  --el-box-shadow: #{$shadow-md};
+  --el-box-shadow-light: #{$shadow-sm};
+  --el-mask-color: rgba(0, 0, 0, 0.5);
+
+  // ---------- 组件级 CSS 变量（官方 dark/css-vars.css 未覆盖，默认白色导致黑白冲突） ----------
+
+  // 菜单（侧边栏 el-menu / el-menu-item / el-sub-menu）
+  --el-menu-bg-color: transparent;
+  --el-menu-text-color: #{$gh-text-secondary};
+  --el-menu-hover-bg-color: #{$gh-bg-tertiary};
+  --el-menu-active-color: #{$gh-link};
+  --el-menu-border-color: transparent;
+  --el-menu-horizontal-bg-color: transparent;
+
+  // 表格（el-table 默认白色背景，未覆盖会整片白色）
+  --el-table-bg-color: #{$gh-bg};
+  --el-table-tr-bg-color: #{$gh-bg};
+  --el-table-row-bg-color: #{$gh-bg};
+  --el-table-header-bg-color: #{$gh-bg-secondary};
+  --el-table-header-text-color: #{$gh-text};
+  --el-table-text-color: #{$gh-text};
+  --el-table-border-color: #{$gh-border-muted};
+  --el-table-border: #{$gh-border-muted};
+  --el-table-row-hover-bg-color: #{$gh-bg-tertiary};
+  --el-table-current-row-bg-color: #{$gh-bg-tertiary};
+  --el-table-fixed-box-shadow: none;
+  --el-table-expanded-cell-bg-color: #{$gh-bg-secondary};
+
+  // 禁用状态
+  --el-disabled-bg-color: #{$gh-bg-tertiary};
+  --el-disabled-text-color: #{$gh-text-placeholder};
+  --el-disabled-border-color: #{$gh-border};
+
+  // 遮罩
+  --el-overlay-color: rgba(0, 0, 0, 0.5);
+  --el-overlay-color-light: rgba(0, 0, 0, 0.3);
+  --el-overlay-color-lighter: rgba(0, 0, 0, 0.2);
+}
+
+// ---------- 卡片 ----------
+.el-card {
+  --el-card-bg-color: #{$gh-bg-secondary};
+  --el-card-padding: 20px;
+  --el-card-border-color: #{$gh-border};
+  background-color: $gh-bg-secondary !important;
+  border-color: $gh-border;
+  color: $gh-text;
+  border-radius: $radius-md;
+  .el-card__header {
+    background-color: $gh-bg-secondary;
+    border-bottom-color: $gh-border;
+    color: $gh-text;
+  }
+  // card body 显式覆盖：Element Plus 默认 .el-card__body 无背景色（继承 card），
+  // 但某些嵌套场景（如 card 内 table）可能继承白色，显式设置兜底
+  .el-card__body {
+    background-color: transparent;
+    color: $gh-text;
+  }
+}
+
+// ---------- 按钮 ----------
+.el-button {
+  &--primary {
+    // 【改造】原硬编码 #1f6feb 改为主题感知令牌（浅色 #2563eb / 暗色 #1f6feb，均保证白字对比度）
+    --el-button-bg-color: var(--gh-btn-primary);
+    --el-button-border-color: var(--gh-btn-primary);
+    --el-button-hover-bg-color: var(--gh-btn-primary-hover);
+    --el-button-hover-border-color: var(--gh-btn-primary-hover);
+    --el-button-active-bg-color: var(--gh-btn-primary-active);
+    --el-button-active-border-color: var(--gh-btn-primary-active);
+  }
+  &--success {
+    --el-button-bg-color: #{$gh-success};
+    --el-button-border-color: #{$gh-success};
+  }
+  &--danger {
+    --el-button-bg-color: #{$gh-danger};
+    --el-button-border-color: #{$gh-danger};
+  }
+  &--default {
+    background-color: $gh-bg-tertiary;
+    border-color: $gh-border;
+    color: $gh-text;
+    &:hover {
+      color: $gh-link;
+      border-color: $gh-link;
+      background-color: $gh-bg-tertiary;
+    }
+  }
+}
+
+// ---------- 输入框 / 文本域 / 选择器 ----------
+.el-input__wrapper,
+.el-textarea__inner {
+  background-color: $gh-bg;
+  box-shadow: 0 0 0 1px $gh-border inset !important;
+  &:hover {
+    box-shadow: 0 0 0 1px $gh-text-placeholder inset !important;
+  }
+  &.is-focus {
+    box-shadow: 0 0 0 1px $gh-link inset !important;
+  }
+}
+.el-input__inner {
+  color: $gh-text;
+  &::placeholder {
+    color: $gh-text-placeholder;
+  }
+}
+.el-select__wrapper {
+  background-color: $gh-bg !important;
+  box-shadow: 0 0 0 1px $gh-border inset !important;
+}
+
+// ---------- 表格（全局覆盖，配合组件级 cell-style 双保险） ----------
+// 组件级 CSS 变量已在 :root.dark 中设置（--el-table-bg-color 等）
+// 此处补充显式背景色覆盖，确保表格本体/表头/单元格/固定列/空状态全部为深色
+.el-table {
+  background-color: $gh-bg !important;
+  // 表头
+  th.el-table__cell {
+    background-color: $gh-bg-secondary !important;
+    color: $gh-text;
+  }
+  // 数据行
+  .el-table__cell {
+    color: $gh-text;
+    // 斑马纹偶数行（如有 stripe）
+    background-color: $gh-bg;
+  }
+  // 悬停行
+  tr:hover > td.el-table__cell,
+  tr:hover > td {
+    background-color: $gh-bg-tertiary !important;
+  }
+  // 当前选中行
+  .current-row > td.el-table__cell {
+    background-color: $gh-bg-tertiary !important;
+  }
+  // 内部容器
+  .el-table__inner-wrapper,
+  .el-table__body-wrapper,
+  .el-table__header-wrapper {
+    background-color: $gh-bg;
+  }
+  // 固定列（fixed 左右列默认白色，必须显式覆盖）
+  .el-table__fixed,
+  .el-table__fixed-right {
+    background-color: $gh-bg;
+    .el-table__fixed-body-wrapper {
+      background-color: $gh-bg;
+    }
+  }
+  // 空数据状态
+  .el-table__empty-block {
+    background-color: $gh-bg;
+    .el-table__empty-text {
+      color: $gh-text-secondary;
+    }
+  }
+  // 展开行
+  .el-table__expanded-cell {
+    background-color: $gh-bg-secondary;
+  }
+  // 斑马纹（stripe 模式下偶数行）
+  &.el-table--striped .el-table__body tr.el-table__row--striped td.el-table__cell {
+    background-color: $gh-bg-secondary;
+  }
+
+  // ---------- 密度优化：加大单元格内边距，让表格更饱满、行距更舒展 ----------
+  // Element Plus 默认 cell padding 8px 0，行高偏窄；提升到 11px 改善可读性与视觉密度
+  .el-table__cell {
+    padding: 11px 0;
+  }
+  // 表头单元格略高，强化层次感
+  th.el-table__cell {
+    padding: 12px 0;
+  }
+  // 单元格内容区水平内边距加大（默认 0 12px → 0 14px）
+  .cell {
+    padding: 0 14px;
+    line-height: 1.6;
+  }
+  // 确保表格容器撑满父级宽度（兜底，避免某些场景 table 收缩）
+  width: 100%;
+}
+
+// ---------- 对话框 ----------
+.el-dialog {
+  background-color: $gh-bg-secondary;
+  border: 1px solid $gh-border;
+  border-radius: $radius-lg;
+  color: $gh-text;
+  .el-dialog__header {
+    border-bottom: 1px solid $gh-border;
+  }
+  .el-dialog__title {
+    color: $gh-text;
+  }
+  .el-dialog__footer {
+    border-top: 1px solid $gh-border;
+  }
+}
+
+// ---------- 菜单（侧边栏） ----------
+// 组件级 CSS 变量已在 :root.dark 中设置（--el-menu-bg-color 等）
+// 此处补充显式背景色覆盖，防止某些 Element Plus 版本的菜单项仍继承默认白色
+.el-menu {
+  background-color: transparent !important;
+  border-right: none;
+  .el-menu-item,
+  .el-sub-menu__title {
+    color: $gh-text-secondary;
+    // 显式设置透明背景：el-menu-item 默认 background-color: var(--el-menu-bg-color)
+    // 某些版本下组件级变量未正确继承，用 !important 兜底
+    background-color: transparent !important;
+    &:hover {
+      background-color: $gh-bg-tertiary !important;
+      color: $gh-text;
+    }
+    &.is-active {
+      color: $gh-link;
+      background-color: $gh-accent-soft !important;
+      &::before {
+        content: '';
+        position: absolute;
+        left: 0;
+        top: 0;
+        bottom: 0;
+        width: 3px;
+        background: $gh-link;
+      }
+    }
+  }
+  // 子菜单展开后的内容区背景
+  .el-sub-menu .el-menu {
+    background-color: transparent !important;
+  }
+}
+
+// ---------- 标签 ----------
+.el-tag {
+  border-radius: 20px;
+  &--success {
+    background-color: $gh-success-soft;
+    color: $gh-success;
+    border-color: transparent;
+  }
+  &--warning {
+    background-color: $gh-warning-soft;
+    color: $gh-warning;
+    border-color: transparent;
+  }
+  &--danger {
+    background-color: $gh-danger-soft;
+    color: $gh-danger;
+    border-color: transparent;
+  }
+  &--info {
+    background-color: $gh-info-soft;
+    color: $gh-text-secondary;
+    border-color: transparent;
+  }
+}
+
+// ---------- MessageBox 专项适配（默认用 --el-bg-color 不继承 .el-dialog） ----------
+.el-message-box {
+  --el-bg-color: #{$gh-bg-secondary};
+  --el-bg-color-page: #{$gh-bg};
+  --el-text-color-primary: #{$gh-text};
+  --el-text-color-regular: #{$gh-text};
+  --el-border-color: #{$gh-border};
+  --el-fill-color: #{$gh-bg-tertiary};
+  background-color: $gh-bg-secondary !important;
+  border: 1px solid $gh-border;
+  border-radius: $radius-lg;
+  .el-message-box__title {
+    color: $gh-text;
+  }
+  .el-message-box__message {
+    color: $gh-text;
+  }
+  .el-message-box__input .el-input__wrapper {
+    background-color: $gh-bg-tertiary;
+  }
+}
+
+// ---------- 遮罩 / 下拉 / 气泡 ----------
+.el-overlay {
+  // 【改造】原硬编码 rgba(0,0,0,0.5) 改为主题感知遮罩令牌（浅色更轻）
+  background-color: var(--gh-mask);
+}
+.el-dropdown-menu,
+.el-popover.el-popper {
+  background-color: $gh-bg-secondary !important;
+  border-color: $gh-border !important;
+  color: $gh-text;
+  .el-dropdown-menu__item {
+    color: $gh-text;
+    &:hover {
+      background-color: $gh-bg-tertiary;
+      color: $gh-link;
+    }
+  }
+}
+.el-loading-mask {
+  // 【改造】原硬编码 rgba(13,17,23,0.8) 改为主题感知遮罩令牌
+  background-color: var(--gh-mask);
+}
+
+// ---------- 分页 ----------
+.el-pagination {
+  --el-pagination-bg-color: #{$gh-bg-tertiary};
+  --el-pagination-hover-color: #{$gh-link};
+  --el-pagination-button-color: #{$gh-text};
+  --el-pagination-button-bg-color: #{$gh-bg-tertiary};
+  button:disabled {
+    background-color: $gh-bg-tertiary;
+    color: $gh-text-placeholder;
+  }
+  .el-pager li {
+    background-color: $gh-bg-tertiary;
+    color: $gh-text;
+    &.is-active {
+      background-color: $gh-link;
+      color: #fff;
+    }
+  }
+}
+
+// ---------- Tabs ----------
+.el-tabs {
+  .el-tabs__item {
+    color: $gh-text-secondary;
+    &.is-active {
+      color: $gh-link;
+    }
+    &:hover {
+      color: $gh-link;
+    }
+  }
+  .el-tabs__nav-wrap::after {
+    background-color: $gh-border-muted;
+  }
+  .el-tabs__active-bar {
+    background-color: $gh-link;
+  }
+}
+
+// ---------- 时间轴 ----------
+.el-timeline-item__node {
+  background-color: $gh-link;
+}
+
+// ---------- 表单 ----------
+.el-form-item__label {
+  color: $gh-text-secondary;
+}
+
+// ---------- 穿梭框 ----------
+.el-transfer-panel {
+  background-color: $gh-bg-secondary;
+  border-color: $gh-border;
+  .el-transfer-panel__header {
+    background-color: $gh-bg-tertiary;
+    border-bottom-color: $gh-border;
+    color: $gh-text;
+  }
+  .el-transfer-panel__body {
+    background-color: $gh-bg;
+  }
+  .el-transfer-panel__item {
+    color: $gh-text;
+  }
+}
+
+// ---------- 树 ----------
+.el-tree {
+  background-color: transparent;
+  color: $gh-text;
+  .el-tree-node__content:hover {
+    background-color: $gh-bg-tertiary;
+  }
+  .el-tree-node.is-current > .el-tree-node__content {
+    background-color: $gh-accent-soft;
+  }
+}
+
+// ---------- NProgress 进度条 ----------
+#nprogress .bar {
+  background: $gh-link !important;
+}
+#nprogress .peg {
+  box-shadow: 0 0 10px $gh-link, 0 0 5px $gh-link;
+}
+
+// ============================================================
+// 补充覆盖：以下组件在初版 element-dark.scss 中遗漏，
+// 会使用 Element Plus 默认浅色主题，导致暗色页面出现白色块（黑白冲突）
+// ============================================================
+
+// ---------- 描述列表（详情页常用：订单/会员/商品详情） ----------
+.el-descriptions {
+  --el-descriptions-item-bordered-label-background: #{$gh-bg-tertiary};
+  .el-descriptions__body {
+    background-color: $gh-bg-secondary;
+    color: $gh-text;
+  }
+  .el-descriptions__label {
+    color: $gh-text-secondary;
+    background-color: $gh-bg-tertiary;
+  }
+  .el-descriptions__content {
+    color: $gh-text;
+    background-color: $gh-bg-secondary;
+  }
+  .el-descriptions__cell {
+    border-color: $gh-border-muted;
+  }
+  &.is-bordered {
+    .el-descriptions__label,
+    .el-descriptions__content {
+      border-color: $gh-border;
+    }
+  }
+}
+
+// ---------- 空状态 ----------
+.el-empty {
+  --el-empty-padding: 40px 0;
+  .el-empty__description {
+    color: $gh-text-secondary;
+  }
+  .el-empty__image {
+    // SVG 内部颜色不可控，仅减弱默认对比度
+    opacity: 0.4;
+  }
+}
+
+// ---------- 折叠面板 ----------
+.el-collapse {
+  --el-collapse-border-color: #{$gh-border};
+  --el-collapse-header-height: 48px;
+  --el-collapse-header-bg-color: #{$gh-bg-secondary};
+  --el-collapse-header-text-color: #{$gh-text};
+  --el-collapse-content-bg-color: #{$gh-bg};
+  --el-collapse-content-text-color: #{$gh-text};
+  border-color: $gh-border;
+  .el-collapse-item__header {
+    background-color: $gh-bg-secondary;
+    color: $gh-text;
+    border-bottom-color: $gh-border;
+    &:hover {
+      background-color: $gh-bg-tertiary;
+    }
+  }
+  .el-collapse-item__wrap {
+    background-color: $gh-bg;
+    border-bottom-color: $gh-border;
+  }
+  .el-collapse-item__content {
+    color: $gh-text;
+  }
+}
+
+// ---------- 步骤条（订单创建向导） ----------
+.el-steps {
+  .el-step__head {
+    &.is-process {
+      color: $gh-text;
+      border-color: $gh-text-secondary;
+    }
+    &.is-finish {
+      color: $gh-success;
+      border-color: $gh-success;
+    }
+    &.is-wait {
+      color: $gh-text-placeholder;
+      border-color: $gh-border;
+    }
+  }
+  .el-step__title {
+    &.is-process {
+      color: $gh-text;
+    }
+    &.is-finish {
+      color: $gh-success;
+    }
+    &.is-wait {
+      color: $gh-text-secondary;
+    }
+  }
+  .el-step__line {
+    background-color: $gh-border;
+  }
+  .el-step__icon.is-text {
+    background-color: $gh-bg-tertiary;
+  }
+}
+
+// ---------- 单选 / 多选 ----------
+.el-radio {
+  --el-radio-text-color: #{$gh-text};
+  color: $gh-text;
+  .el-radio__inner {
+    background-color: $gh-bg;
+    border-color: $gh-border;
+  }
+  &.is-checked {
+    .el-radio__inner {
+      background-color: $gh-link;
+      border-color: $gh-link;
+    }
+    .el-radio__label {
+      color: $gh-link;
+    }
+  }
+}
+.el-checkbox {
+  --el-checkbox-text-color: #{$gh-text};
+  color: $gh-text;
+  .el-checkbox__inner {
+    background-color: $gh-bg;
+    border-color: $gh-border;
+  }
+  &.is-checked {
+    .el-checkbox__inner {
+      background-color: $gh-link;
+      border-color: $gh-link;
+    }
+    .el-checkbox__label {
+      color: $gh-link;
+    }
+  }
+  .el-checkbox__input.is-checked .el-checkbox__inner::after {
+    border-color: #fff;
+  }
+}
+
+// ---------- 开关 ----------
+.el-switch {
+  --el-switch-off-color: #{$gh-border};
+  --el-switch-on-color: #{$gh-link};
+}
+
+// ---------- 警告提示 ----------
+.el-alert {
+  --el-alert-bg-color: #{$gh-bg-secondary};
+  border: 1px solid $gh-border;
+  &--info {
+    --el-alert-text-color: #{$gh-text};
+    background-color: $gh-bg-secondary;
+  }
+  &--success {
+    background-color: $gh-success-soft;
+    color: $gh-success;
+  }
+  &--warning {
+    background-color: $gh-warning-soft;
+    color: $gh-warning;
+  }
+  &--error {
+    background-color: $gh-danger-soft;
+    color: $gh-danger;
+  }
+  .el-alert__title {
+    color: inherit;
+  }
+  .el-alert__description {
+    color: $gh-text-secondary;
+  }
+}
+
+// ---------- 分割线 ----------
+.el-divider {
+  --el-border-color: #{$gh-border};
+  border-color: $gh-border;
+  &__text {
+    background-color: $gh-bg;
+    color: $gh-text-secondary;
+  }
+}
+
+// ---------- 进度条 ----------
+.el-progress {
+  .el-progress-bar__outer {
+    background-color: $gh-bg-tertiary;
+  }
+  .el-progress__text {
+    color: $gh-text-secondary;
+  }
+}
+
+// ---------- 结果页 ----------
+.el-result {
+  .el-result__title {
+    color: $gh-text;
+  }
+  .el-result__subtitle {
+    color: $gh-text-secondary;
+  }
+  .el-result__icon svg {
+    opacity: 0.8;
+  }
+}
+
+// ---------- 统计卡片 ----------
+.el-statistic {
+  --el-statistic-title-font-size: 13px;
+  --el-statistic-content-font-size: 24px;
+  .el-statistic__head {
+    color: $gh-text-secondary;
+  }
+  .el-statistic__content {
+    color: $gh-text;
+  }
+}
+
+// ---------- 骨架屏 ----------
+.el-skeleton {
+  --el-skeleton-color: #{$gh-bg-tertiary};
+  --el-skeleton-to-color: #{$gh-border};
+}
+
+// ---------- 下拉选择面板（el-select / el-date-picker / el-cascader 共用 popper） ----------
+.el-select__popper.el-popper,
+.el-popper.el-popper {
+  // 弹层背景统一为深色，避免下拉选项白色块
+  background-color: $gh-bg-secondary !important;
+  border-color: $gh-border !important;
+  .el-popper__arrow::before {
+    background-color: $gh-bg-secondary !important;
+    border-color: $gh-border !important;
+  }
+  .el-select-dropdown__item {
+    color: $gh-text;
+    &:hover {
+      background-color: $gh-bg-tertiary;
+    }
+    &.is-hovering {
+      background-color: $gh-bg-tertiary;
+    }
+    &.is-selected {
+      color: $gh-link;
+      background-color: $gh-accent-soft;
+    }
+    &.is-disabled {
+      color: $gh-text-placeholder;
+    }
+  }
+}
+
+// ---------- 日期选择器面板 ----------
+.el-date-editor.el-input,
+.el-date-editor.el-input__wrapper {
+  .el-range-input {
+    color: $gh-text;
+    &::placeholder {
+      color: $gh-text-placeholder;
+    }
+  }
+  .el-range-separator {
+    color: $gh-text-secondary;
+  }
+}
+.el-picker-panel {
+  background-color: $gh-bg-secondary;
+  border-color: $gh-border;
+  color: $gh-text;
+  .el-picker-panel__icon-btn {
+    color: $gh-text-secondary;
+    &:hover {
+      color: $gh-link;
+    }
+  }
+  .el-date-table {
+    th {
+      color: $gh-text-secondary;
+      border-bottom-color: $gh-border;
+    }
+    td {
+      color: $gh-text;
+      &.next-month,
+      &.prev-month {
+        color: $gh-text-placeholder;
+      }
+      &.today {
+        .el-date-table-cell__text {
+          color: $gh-link;
+          font-weight: 600;
+        }
+      }
+      &.current:not(.disabled) {
+        .el-date-table-cell__text {
+          background-color: $gh-link;
+          color: #fff;
+        }
+      }
+      &:hover {
+        .el-date-table-cell__text {
+          background-color: $gh-bg-tertiary;
+        }
+      }
+    }
+  }
+  .el-time-panel {
+    background-color: $gh-bg-secondary;
+    border-color: $gh-border;
+    .el-time-spinner__item {
+      color: $gh-text;
+      &.is-active {
+        color: $gh-link;
+      }
+    }
+  }
+  .el-year-table,
+  .el-month-table {
+    td {
+      color: $gh-text;
+      .cell {
+        color: $gh-text;
+        &:hover {
+          background-color: $gh-bg-tertiary;
+        }
+      }
+      &.current:not(.disabled) .cell {
+        background-color: $gh-link;
+        color: #fff;
+      }
+    }
+  }
+  .el-picker-panel__sidebar {
+    background-color: $gh-bg-secondary;
+    border-right-color: $gh-border;
+  }
+  .el-picker-panel__footer {
+    border-top-color: $gh-border;
+  }
+}
+
+// ---------- 级联选择器面板 ----------
+.el-cascader-panel {
+  background-color: $gh-bg-secondary;
+  border-color: $gh-border;
+  .el-cascader-menu {
+    border-right-color: $gh-border;
+    background-color: $gh-bg-secondary;
+  }
+  .el-cascader-menu__item {
+    color: $gh-text;
+    &:hover {
+      background-color: $gh-bg-tertiary;
+    }
+    &.is-active {
+      color: $gh-link;
+      background-color: $gh-accent-soft;
+    }
+  }
+}
+
+// ---------- 折叠态侧边栏弹出菜单（collapse=true 时子菜单弹出层） ----------
+.el-menu--popup {
+  background-color: $gh-bg-secondary !important;
+  border-color: $gh-border !important;
+  .el-menu-item,
+  .el-sub-menu__title {
+    color: $gh-text-secondary;
+    &:hover {
+      background-color: $gh-bg-tertiary;
+      color: $gh-text;
+    }
+    &.is-active {
+      color: $gh-link;
+      background-color: $gh-accent-soft;
+    }
+  }
+}
+
+// ---------- 图片容器 ----------
+.el-image {
+  background-color: $gh-bg-tertiary;
+}
+
+// ---------- 回到顶部 ----------
+.el-backtop {
+  --el-backtop-bg-color: #{$gh-bg-tertiary};
+  --el-backtop-text-color: #{$gh-text};
+  --el-backtop-hover-bg-color: #{$gh-border};
+  color: $gh-text;
+}
+
+// ============================================================
+// 按钮交互增强
+// ============================================================
+.el-button {
+  transition: all 0.15s ease !important;
+  
+  &:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  }
+  
+  &:active {
+    transform: scale(0.97);
+  }
+  
+  &.is-disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    box-shadow: none !important;
+    transform: none !important;
+  }
+}
+
+// ============================================================
+// 弹窗过渡动画
+// ============================================================
+.dialog-fade-enter-active {
+  animation: dialog-fade-in 0.2s ease;
+}
+.dialog-fade-leave-active {
+  animation: dialog-fade-in 0.2s ease reverse;
+}
+@keyframes dialog-fade-in {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+// ============================================================
+// 排序指示器箭头颜色
+// ============================================================
+.el-table .el-table__column-sort .caret-wrapper .sort-caret.ascending,
+.el-table .el-table__column-sort .caret-wrapper .sort-caret.descending {
+  color: $gh-link;
+}
+
+// ============================================================
+// Toast 消息（ElMessage）定制
+// 添加左侧 3px 彩色边框，便于用户快速区分不同类型通知
+// ============================================================
+.el-message {
+  border-left: 3px solid;
+
+  &.el-message--success {
+    border-left-color: var(--el-color-success);
+  }
+  &.el-message--warning {
+    border-left-color: var(--el-color-warning);
+  }
+  &.el-message--error {
+    border-left-color: var(--el-color-error);
+  }
+  &.el-message--info {
+    border-left-color: var(--el-color-info);
+  }
+}

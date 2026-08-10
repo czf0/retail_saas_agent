@@ -1,0 +1,125 @@
+{
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": {"type": "grafana", "uid": "-- Grafana --"},
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations & Alerts",
+        "type": "dashboard"
+      }
+    ]
+  },
+  "description": "零售 SaaS Agent 可观测大盘: 编排成功率/阻断率/工具调用/ReAct 迭代/审计落盘. 数据源 Prometheus (双抓取: OTel Collector + Python 直连).",
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 1,
+  "id": null,
+  "links": [],
+  "liveNow": false,
+  "panels": [
+    {
+      "datasource": {"type": "prometheus"},
+      "fieldConfig": {"defaults": {"color": {"mode": "thresholds"}, "thresholds": {"mode": "absolute", "steps": [{"color": "green"}, {"color": "blue", "value": 1}]}}, "overrides": []},
+      "gridPos": {"h": 5, "w": 6, "x": 0, "y": 0},
+      "id": 1,
+      "options": {"colorMode": "value", "graphMode": "area", "justifyMode": "auto", "orientation": "horizontal", "reduceOptions": {"calcs": ["lastNotNull"], "fields": "", "values": false}, "textMode": "auto"},
+      "targets": [{"datasource": {"type": "prometheus"}, "expr": "sum(rate(orchestrator_success_total[5m])) + sum(rate(orchestrator_blocked_total[5m]))", "legendFormat": "QPS", "refId": "A"}],
+      "title": "请求 QPS (5m)",
+      "type": "stat"
+    },
+    {
+      "datasource": {"type": "prometheus"},
+      "fieldConfig": {"defaults": {"color": {"mode": "thresholds"}, "thresholds": {"mode": "absolute", "steps": [{"color": "green"}, {"color": "yellow", "value": 0.05}, {"color": "red", "value": 0.2}]}, "unit": "percentunit"}, "overrides": []},
+      "gridPos": {"h": 5, "w": 6, "x": 6, "y": 0},
+      "id": 2,
+      "options": {"colorMode": "background", "graphMode": "none", "reduceOptions": {"calcs": ["lastNotNull"], "fields": "", "values": false}, "textMode": "auto"},
+      "targets": [{"datasource": {"type": "prometheus"}, "expr": "sum(rate(orchestrator_blocked_total[5m])) / clamp_min(sum(rate(orchestrator_success_total[5m])) + sum(rate(orchestrator_blocked_total[5m])), 0.001)", "legendFormat": "阻断率", "refId": "A"}],
+      "title": "阻断率 (5m)",
+      "type": "stat"
+    },
+    {
+      "datasource": {"type": "prometheus"},
+      "fieldConfig": {"defaults": {"color": {"mode": "thresholds"}, "thresholds": {"mode": "absolute", "steps": [{"color": "green"}, {"color": "red", "value": 1}]}, "unit": "short"}, "overrides": []},
+      "gridPos": {"h": 5, "w": 6, "x": 12, "y": 0},
+      "id": 3,
+      "options": {"colorMode": "value", "graphMode": "none", "reduceOptions": {"calcs": ["lastNotNull"], "fields": "", "values": false}, "textMode": "auto"},
+      "targets": [{"datasource": {"type": "prometheus"}, "expr": "sum(increase(orchestrator_stream_crash_total[1h])) + sum(increase(orchestrator_graph_crash_total[1h]))", "legendFormat": "崩溃次数", "refId": "A"}],
+      "title": "执行器崩溃 (1h)",
+      "type": "stat"
+    },
+    {
+      "datasource": {"type": "prometheus"},
+      "fieldConfig": {"defaults": {"color": {"mode": "thresholds"}, "thresholds": {"mode": "absolute", "steps": [{"color": "green"}, {"color": "red", "value": 1}]}, "unit": "short"}, "overrides": []},
+      "gridPos": {"h": 5, "w": 6, "x": 18, "y": 0},
+      "id": 4,
+      "options": {"colorMode": "value", "graphMode": "none", "reduceOptions": {"calcs": ["lastNotNull"], "fields": "", "values": false}, "textMode": "auto"},
+      "targets": [{"datasource": {"type": "prometheus"}, "expr": "sum(increase(audit_write_failed_total[1h]))", "legendFormat": "审计失败", "refId": "A"}],
+      "title": "审计写入失败 (1h)",
+      "type": "stat"
+    },
+    {
+      "datasource": {"type": "prometheus"},
+      "fieldConfig": {"defaults": {"color": {"mode": "palette-classic"}, "custom": {"axisCenteredZero": false, "axisColorMode": "text", "axisLabel": "", "axisPlacement": "auto", "barAlignment": 0, "drawStyle": "line", "fillOpacity": 10, "gradientMode": "none", "hideFrom": {"legend": false, "tooltip": false, "viz": false}, "lineInterpolation": "linear", "lineWidth": 1, "pointSize": 5, "scaleDistribution": {"type": "linear"}, "showPoints": "never", "spanNulls": false, "stacking": {"group": "A", "mode": "none"}, "thresholdsStyle": {"mode": "off"}}, "unit": "short"}, "overrides": []},
+      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 5},
+      "id": 5,
+      "options": {"legend": {"calcs": ["lastNotNull"], "displayMode": "list", "placement": "bottom", "showLegend": true}, "tooltip": {"mode": "single", "sort": "none"}},
+      "targets": [{"datasource": {"type": "prometheus"}, "expr": "sum(rate(orchestrator_success_total[5m]))", "legendFormat": "成功", "refId": "A"}, {"datasource": {"type": "prometheus"}, "expr": "sum(rate(orchestrator_blocked_total[5m]))", "legendFormat": "阻断", "refId": "B"}],
+      "title": "编排成功 vs 阻断趋势",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {"type": "prometheus"},
+      "fieldConfig": {"defaults": {"color": {"mode": "palette-classic"}, "custom": {"drawStyle": "line", "fillOpacity": 10, "lineInterpolation": "linear", "lineWidth": 1, "showPoints": "never"}, "unit": "chars"}, "overrides": []},
+      "gridPos": {"h": 8, "w": 12, "x": 12, "y": 5},
+      "id": 6,
+      "options": {"legend": {"calcs": ["lastNotNull"], "displayMode": "list", "placement": "bottom", "showLegend": true}, "tooltip": {"mode": "single", "sort": "none"}},
+      "targets": [{"datasource": {"type": "prometheus"}, "expr": "histogram_quantile(0.95, sum by(le)(rate(orchestrator_answer_len_bucket[5m])))", "legendFormat": "P95", "refId": "A"}, {"datasource": {"type": "prometheus"}, "expr": "histogram_quantile(0.50, sum by(le)(rate(orchestrator_answer_len_bucket[5m])))", "legendFormat": "P50", "refId": "B"}],
+      "title": "答案长度分布 (P50/P95)",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {"type": "prometheus"},
+      "fieldConfig": {"defaults": {"color": {"mode": "thresholds"}, "thresholds": {"mode": "absolute", "steps": [{"color": "blue"}, {"color": "green", "value": 1}]}, "unit": "short"}, "overrides": []},
+      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 13},
+      "id": 7,
+      "options": {"displayMode": "gradient", "minVizHeight": 10, "minVizWidth": 0, "orientation": "horizontal", "reduceOptions": {"calcs": ["lastNotNull"], "fields": "", "values": false}, "showUnfilled": true, "valueMode": "color"},
+      "targets": [{"datasource": {"type": "prometheus"}, "expr": "topk(10, sum by(name)(rate(tool_call_total[5m])))", "legendFormat": "{{name}}", "refId": "A"}],
+      "title": "工具调用 Top10 (QPS)",
+      "type": "bargauge"
+    },
+    {
+      "datasource": {"type": "prometheus"},
+      "fieldConfig": {"defaults": {"color": {"mode": "thresholds"}, "thresholds": {"mode": "absolute", "steps": [{"color": "green"}, {"color": "yellow", "value": 0.05}, {"color": "red", "value": 0.2}]}, "unit": "percentunit"}, "overrides": []},
+      "gridPos": {"h": 8, "w": 12, "x": 12, "y": 13},
+      "id": 8,
+      "options": {"showHeader": true, "cellHeight": "sm", "footer": {"show": false}},
+      "targets": [{"datasource": {"type": "prometheus"}, "expr": "sum by(name)(rate(tool_call_failed_total[5m])) / clamp_min(sum by(name)(rate(tool_call_total[5m])), 0.001)", "legendFormat": "{{name}}", "refId": "A"}, {"datasource": {"type": "prometheus"}, "expr": "histogram_quantile(0.99, sum by(le, name)(rate(tool_cost_ms_bucket[5m])))", "legendFormat": "{{name}} P99", "refId": "B"}],
+      "title": "工具失败率 & P99 耗时",
+      "type": "table"
+    },
+    {
+      "datasource": {"type": "prometheus"},
+      "fieldConfig": {"defaults": {"color": {"mode": "palette-classic"}, "custom": {"drawStyle": "line", "fillOpacity": 10, "lineInterpolation": "linear", "lineWidth": 1, "showPoints": "never"}, "unit": "short"}, "overrides": []},
+      "gridPos": {"h": 7, "w": 24, "x": 0, "y": 21},
+      "id": 9,
+      "options": {"legend": {"calcs": ["lastNotNull"], "displayMode": "list", "placement": "bottom", "showLegend": true}, "tooltip": {"mode": "single", "sort": "none"}},
+      "targets": [{"datasource": {"type": "prometheus"}, "expr": "sum(rate(react_iteration_total[5m]))", "legendFormat": "ReAct 迭代次数", "refId": "A"}, {"datasource": {"type": "prometheus"}, "expr": "sum(rate(plan_generated_total[5m]))", "legendFormat": "Plan 生成", "refId": "B"}, {"datasource": {"type": "prometheus"}, "expr": "sum(rate(answer_empty_fallback_total[5m]))", "legendFormat": "空答案兜底", "refId": "C"}],
+      "title": "ReAct 迭代 / Plan 生成 / 空答案兜底",
+      "type": "timeseries"
+    }
+  ],
+  "refresh": "15s",
+  "schemaVersion": 39,
+  "tags": ["agent", "retail", "obs"],
+  "templating": {"list": []},
+  "time": {"from": "now-1h", "to": "now"},
+  "timepicker": {},
+  "timezone": "",
+  "title": "Agent 可观测大盘",
+  "uid": "agent-overview",
+  "version": 1,
+  "weekStart": ""
+}

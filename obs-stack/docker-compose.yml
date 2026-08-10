@@ -1,0 +1,114 @@
+# obs-stack/docker-compose.yml
+# 可观测组件一键编排: OTel Collector + Tempo + Prometheus + Grafana.
+#
+# 设计说明:
+# - Python 运行在 Windows host (非容器), 通过 http://127.0.0.1:4317 推送 OTLP 至 Collector;
+# - Collector 居中做 batch/memory_limiter 处理, 再分发 traces→Tempo, metrics→Prometheus exporter;
+# - Prometheus 双抓取: Collector :8889 (OTel 原生直方图分桶) + Python 直连 :8000/metrics (mirror avg);
+# - Grafana 自动注入 Tempo + Prometheus 数据源, 支持 Exemplar 钻取, 默认深色主题.
+#
+# Windows 启动:
+#   cd obs-stack
+#   docker compose up -d
+#   docker compose ps           # 4 容器全 Up
+# 访问地址:
+#   Tempo:       http://localhost:3200  (Tempo API / ready 检查; 查询走 Grafana)
+#   Prometheus:  http://localhost:9090
+#   Grafana:     http://localhost:3000  (admin/admin)  ← TraceQL 查询 + Exemplar 钻取
+networks:
+  obs-net:
+    driver: bridge
+
+volumes:
+  prometheus-data:
+  grafana-data:
+  tempo-data:                    # Tempo trace 数据持久化 (重启不丢失, 对比 Jaeger memory)
+  redis_stack_data:
+
+services:
+  # ---- OTel Collector: 接收 Python OTLP, 分发 traces→Tempo, metrics→Prometheus exporter ----
+  otel-collector:
+    image: otel/opentelemetry-collector-contrib:0.103.0
+    container_name: obs-otel-collector
+    restart: unless-stopped
+    command: ["--config=/etc/otelcol/config.yaml"]
+    volumes:
+      - ./otel-collector-config.yaml:/etc/otelcol/config.yaml:ro
+    ports:
+      - "4317:4317"   # OTLP gRPC (Python 推送 traces+metrics)
+      - "4318:4318"   # OTLP HTTP (备用, 调试用)
+      - "8889:8889"   # Prometheus exporter (Prometheus 抓取此端口拿 metrics)
+    networks:
+      - obs-net
+
+  # ---- Grafana Tempo: Trace 后端 (Grafana 原生集成, 替换原 Jaeger) ----
+  # 优势: 本地文件持久化 (重启不丢) + TraceQL 查询 + Exemplar 钻取 + Service Graph
+  tempo:
+    image: grafana/tempo:2.5.0
+    container_name: obs-tempo
+    restart: unless-stopped
+    command: ["-config.file=/etc/tempo/tempo.yaml"]
+    volumes:
+      - ./tempo.yaml:/etc/tempo/tempo.yaml:ro
+      - tempo-data:/var/tempo          # trace block 持久化 (wal + blocks)
+    ports:
+      - "3200:3200"     # Tempo HTTP API (Grafana 查询 / TraceQL / /ready)
+      - "4317"          # OTLP gRPC (仅容器内, Collector 通过 docker 网络 tempo:4317 推送)
+      - "4318"          # OTLP HTTP (备用)
+    networks:
+      - obs-net
+
+  # ---- Prometheus: 指标抓取与存储 ----
+  prometheus:
+    image: prom/prometheus:v2.53.0
+    container_name: obs-prometheus
+    restart: unless-stopped
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./prometheus-rules.yml:/etc/prometheus/prometheus-rules.yml:ro
+      - prometheus-data:/prometheus
+    command:
+      - "--config.file=/etc/prometheus/prometheus.yml"
+      - "--storage.tsdb.retention.time=7d"
+      - "--web.enable-lifecycle"
+    ports:
+      - "9090:9090"
+    networks:
+      - obs-net
+
+  # ---- Grafana: 指标大盘 + Trace 钻取 ----
+  # GF_USERS_DEFAULT_THEME=dark: 默认深色主题 (对齐 GitHub Dark 偏好)
+  grafana:
+    image: grafana/grafana:11.1.0
+    container_name: obs-grafana
+    restart: unless-stopped
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+      - GF_USERS_ALLOW_SIGN_UP=false
+      - GF_SERVER_ROOT_URL=http://localhost:3000
+      - GF_USERS_DEFAULT_THEME=dark
+    volumes:
+      - ./grafana/provisioning:/etc/grafana/provisioning:ro
+      - grafana-data:/var/lib/grafana
+    ports:
+      - "3000:3000"
+    networks:
+      - obs-net
+    depends_on:
+      - prometheus
+      - tempo
+  
+  # ---- RedisStack: 缓存 适配checkpointer----
+  redis-stack:
+    image: redis/redis-stack:latest
+    container_name: redis-stack
+    ports:
+      - "6379:6379"
+      - "8001:8001"
+    # 持久化，重启数据不丢失
+    volumes:
+      - redis_stack_data:/data
+    environment:
+      - REDIS_ARGS=--appendonly yes
+  

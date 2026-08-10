@@ -1,0 +1,69 @@
+// ============================================================
+// 全局重置样式
+// 显式 @use variables.scss：通过 @use 加载的子模块不继承 additionalData 注入
+// ============================================================
+@use './variables.scss' as *;
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html,
+body,
+#app {
+  width: 100%;
+  height: 100%;
+}
+
+// html 同步设置深色背景：防止页面初次加载（CSS 未应用完成）时出现白色闪烁（FOUC）
+html {
+  background-color: $gh-bg;
+}
+
+body {
+  font-family: $font-sans;
+  background-color: $gh-bg;
+  color: $gh-text;
+  line-height: 1.5;
+  font-size: 14px;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+a {
+  color: $gh-link;
+  text-decoration: none;
+  transition: color $transition-base;
+  &:hover {
+    color: $gh-link-hover;
+  }
+}
+
+ul,
+ol {
+  list-style: none;
+}
+
+// 全局滚动条
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+  &-track {
+    background: transparent;
+  }
+  &-thumb {
+    background: $gh-border;
+    border-radius: 5px;
+    &:hover {
+      background: $gh-text-placeholder;
+    }
+  }
+}
+
+// ---------- Focus Ring（无障碍焦点环）----------
+:focus-visible {
+  outline: 2px solid $gh-link;
+  outline-offset: 2px;
+}

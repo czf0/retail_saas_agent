@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<!--
+  【改造】默认浅色主题（移除写死的 class="dark"）。
+  防闪烁：以下内联脚本在 CSS 应用前同步执行，仅当用户此前选过暗色（localStorage.gh_theme==='dark'）
+  时才给 <html> 加 .dark 类，避免首屏主题闪烁（FOUC）。首次访问默认浅色。
+-->
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" href="/favicon.ico" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>零售业务管理台</title>
+    <script>
+      (function () {
+        if (localStorage.getItem('gh_theme') === 'dark') {
+          document.documentElement.classList.add('dark');
+        }
+      })();
+    </script>
+  </head>
+  <body>
+    <div id="app"></div>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

@@ -1,0 +1,59 @@
+"""
+unified_agent/flow_types.py
+Unified Agent 流程数据结构（FlowContext / FlowResult）。
+
+设计说明：
+- 从 agent/flow/base_flow.py 摘取 FlowContext 与 FlowResult 两个 pydantic model,
+  使 unified_agent 自包含流程上下文与结果定义，消除对 agent 包的数据结构依赖.
+- 不搬移 BaseFlow 抽象基类: unified_agent 采用自有 graph 编排（intent_route / plan_generate /
+  react_execute / answer_finalize），不依赖 BaseFlow 的 pre_hook / post_hook / tracer.span 钩子体系，
+  故仅保留纯数据结构，避免引入无用的观测耦合（旧 BaseFlow 绑定 obs.metrics / obs.tracer）.
+- agent/flow/base_flow.py 原文件保留不动，供 agent 包 / agent_backend / examples 继续使用.
+"""
+from typing import List, Optional
+
+from pydantic import BaseModel, Field
+
+from schema.agent_schema import ChatMessage, StreamChunk
+
+
+class FlowContext(BaseModel):
+    """流程执行上下文。"""
+
+    # 用户查询
+    query: str = Field(default="", description="用户查询")
+    # 会话 ID
+    session_id: Optional[str] = Field(default=None, description="会话ID")
+    # 租户 ID
+    tenant_id: Optional[str] = Field(default=None, description="租户ID")
+    # 历史消息
+    messages: List[ChatMessage] = Field(default_factory=list, description="历史消息")
+    # 是否启用 RAG
+    enable_rag: bool = Field(default=True, description="是否启用RAG")
+    # 采样温度覆盖 (当前 graph 未消费: plan_generate 硬编码 0.0, ReAct 用 LLM 默认温度; 预留 per-request 覆盖)
+    temperature: Optional[float] = Field(default=None, description="采样温度")
+    # 模型覆盖 (当前 graph 未消费: unified_llm_client 固定模型; 预留 per-request 覆盖)
+    model: Optional[str] = Field(default=None, description="模型")
+    # 嵌套调用来源 (当前 unified_agent 无嵌套调用, 全流程未 set/get; 预留埋点)
+    parent_flow: Optional[str] = Field(default=None, description="父流程")
+    # 扩展元数据（orchestrator 用于传递 flow_type 等控制信息，避免侵入核心字段）
+    meta: dict = Field(default_factory=dict, description="扩展元数据")
+
+
+class FlowResult(BaseModel):
+    """流程执行结果。
+
+    [当前主流程未使用] 主流程仅流式 (StreamChunk); 此结构为非流式/内部调用数据契约, 预留.
+    rag_hit_count 仅原非流式 run() 路径 set (已删); chunks (非流式场景回放) 从未填充.
+    """
+
+    # 最终回答
+    answer: str = Field(default="", description="最终回答")
+    # RAG 命中文档数
+    rag_hit_count: int = Field(default=0, description="RAG命中文档数")
+    # 使用的工具列表
+    used_tools: List[str] = Field(default_factory=list, description="使用的工具")
+    # 中间事件分片（供非流式场景回放）
+    chunks: List[StreamChunk] = Field(default_factory=list, description="中间事件")
+    # 扩展元数据
+    meta: dict = Field(default_factory=dict, description="扩展元数据")

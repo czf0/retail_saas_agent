@@ -1,0 +1,31 @@
+# obs-stack/prometheus-rules.yml
+# Prometheus 告警规则 (可选, 强化运维感知).
+#
+# 规则说明:
+# - AgentToolFailureRateHigh: 单工具 5 分钟失败率超 30% 告警 (定位故障工具/权限软拒绝频发);
+# - AgentOrchestratorCrash: 编排器 5 分钟内发生崩溃立即告警 (执行器异常需即时介入).
+
+groups:
+  - name: agent-alerts
+    rules:
+      - alert: AgentToolFailureRateHigh
+        expr: |
+          sum by (name) (rate(tool_call_failed_total[5m]))
+          /
+          clamp_min(sum by (name) (rate(tool_call_total[5m])), 0.001)
+          > 0.3
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "工具 {{ $labels.name }} 失败率超 30%"
+          description: "工具 {{ $labels.name }} 最近 5 分钟失败率 {{ $value | humanizePercentage }}，请检查权限配置或下游服务可用性."
+
+      - alert: AgentOrchestratorCrash
+        expr: increase(orchestrator_stream_crash_total[5m]) > 0
+        for: 0m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Agent 编排器最近 5 分钟发生崩溃"
+          description: "检测到 orchestrator_stream_crash 增长，执行器可能存在异常，请查看 Python 服务日志."

@@ -1,0 +1,95 @@
+spring:
+  application:
+    name: service-java-business
+ 
+  # MySQL业务库
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://127.0.0.1:3306/retail_business?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai
+    username: root
+    password: root
+  # 文件上传配置 (D2 知识库文件上传: 多文件 + 大小/类型限制)
+  # max-file-size: 单文件上限 (10MB, 与 Python kb_parse_router _MAX_FILE_SIZE 对齐)
+  # max-request-size: 单次请求上限 (50MB, 支持 5 文件 × 10MB)
+  servlet:
+    multipart:
+      enabled: true
+      max-file-size: 10MB
+      max-request-size: 50MB
+      file-size-threshold: 0
+  # 业务独立Redis
+  data:
+    redis:
+      host: 127.0.0.1
+      port: 6379
+      database: 0
+
+# MybatisPlus多租户自动过滤
+mybatis-plus:
+  mapper-locations: classpath:mapper/*.xml
+  global-config:
+    db-config:
+      logic-delete-field: deleted
+      logic-delete-value: 1
+      logic-not-delete-value: 0
+  configuration:
+    # 枚举字段统一处理器：枚举 code 标 @EnumValue 后，MP 据此自动完成 enum↔DB Integer 转换（实体字段改枚举类型后生效）
+    default-enum-type-handler: com.baomidou.mybatisplus.core.handlers.MybatisEnumTypeHandler
+# Sa-Token鉴权
+sa-token:
+  token-name: token
+  timeout: 86400
+  is-read-cookie: false
+# Agent 内部调用配置
+# Python 工具回调 Java API 时携带 X-Internal-Secret 头, 校验通过后建立临时登录态,
+# 使 @SaCheckPermission 基于 userId 校验权限, 无需透传用户 Token.
+# 两端必须一致 (Python .env INTERNAL_SECRET), 仅限内网调用.
+agent:
+  internal-secret: retail-agent-internal-2026
+  # Python Agent 基地址 (Java 调用 Python AI 能力: 工具/记忆抽取巩固/知识库解析共用)
+  python-base: http://127.0.0.1:8000
+  # ---- 长期记忆配置 (对齐 Python config/agent_flow_settings.py) ----
+  memory:
+    # OTHER 分类=100 的槽位上限 (与 Python MEMORY_OTHER_SLOT_MAX 对齐); category 0-6 每类固定 1 条
+    other-slot-max: 3
+    # 置信度入库门槛 (双保险, 与 Python MEMORY_CONFIDENCE_THRESHOLD 对齐; 合并/覆盖前新记忆必须 ≥ 此值)
+    confidence-threshold: 0.7
+# 知识库文件上传管控配置 (D2)
+# max-size: 单文件大小上限 (10MB, 与 spring.servlet.multipart.max-file-size + Python 端对齐)
+# allowed-types: 允许的文件扩展名白名单 (与 Python file_parser.ALLOWED_EXTENSIONS 对齐)
+# max-files: 单次上传文件数上限 (5, 避免一次批量灌入过多文档)
+# file-dir: 知识文档原文落盘根目录 (data/kb_files, 与 KnowledgeDocServiceImpl.KB_FILE_DIR 对齐)
+kb:
+  upload:
+    max-size: 30MB
+    allowed-types: txt,md,pdf,docx
+    max-files: 5
+  file-dir: data/kb_files
+  seed:
+    # 启动种子知识文档开关：true 时 KnowledgeDocSeedRunner 在启动时为 1001(超市)/1002(零食店)
+    # 幂等灌入「共同零售知识 + 行业专属知识」文档（按 title+tenant 判重，重复启动不产生重复文档）。
+    # 生产环境可置 false 关闭。
+    enabled: true
+# 服务端口
+server:
+  port: 8080
+# 日志配置：pattern / appender / 文件输出 / 滚动策略均迁移至 logback-spring.xml
+# 此处仅保留联调期的 mapper SQL 级别覆盖（logback-spring.xml 的 logger 可被 application.yml 覆盖）
+logging:
+  charset:
+    console: utf-8
+  level:
+    com.retail.business.mapper: debug
+    com.baomidou.mybatisplus: debug
+    com.baomidou.mybatisplus.extension.plugins.inner.TenantLineInnerInterceptor: OFF
+# 多租户配置
+# ignore-tables：tenant_id 可空（平台级+租户级双层）或 Service 层手动过滤的表
+# 含：①平台级配置/字典/日志(sys_oper_log/sys_config/sys_dict_type/sys_dict_data) ②RBAC权限模块(sys_user/sys_role/sys_menu/sys_user_role/sys_role_menu/sys_store) ③租户配置/流程/账号(tenant_config/flow_config/sys_account)
+tenant:
+  column: tenant_id
+  ignore-tables: sys_tenant,sys_dict,sys_oper_log,sys_config,sys_dict_type,sys_dict_data,sys_account,sys_user,sys_role,sys_menu,sys_user_role,sys_role_menu,sys_store,tenant_config,flow_config
+# 门店隔离配置（白名单：仅下列表参与门店隔离，store_id 由  StoreLineHandler 自动注入）
+# 含三类：①统计快照表(sales_record/inventory_record/order_trend) ②订单交易表(order_info/order_item/order_refund) ③门店级业务表(product_stock/stock_movement/user_coupon/points_log)
+store:
+  column: store_id
+  tables: sales_record,inventory_record,order_trend,order_info,order_item,order_refund,product_stock,stock_movement,user_coupon,points_log,chat_session,chat_message

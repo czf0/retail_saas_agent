@@ -1,0 +1,1 @@
+"""flow_architecture 自包含共享类型（FlowContext/FlowResult 副本）。"""

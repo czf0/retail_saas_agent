@@ -1,0 +1,36 @@
+version: "3.8"
+
+# ---- OTel LGTM:Otel指标大盘体系 不包含Collector ----
+services:
+  lgtm:
+    image: grafana/otel-lgtm:latest
+    container_name: otel-lgtm
+    restart: unless-stopped
+    ports:
+      - "3000:3000"     # Grafana UI
+      - "4317:4317"     # OTLP gRPC
+      - "4318:4318"     # OTLP HTTP
+    # 持久化（Windows注意路径，如需持久化放开下面volumes）
+    # volumes:
+    #   - ./lgtm-data:/data
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin123456
+    # 资源限制，防止Docker Desktop内存爆满
+    deploy:
+      resources:
+        limits:
+          cpus: '2.0'
+          memory: 2G
+
+  # ---- RedisStack: 缓存 适配checkpointer----
+  redis-stack:
+    image: redis/redis-stack:latest
+    container_name: redis-stack
+    ports:
+      - "6379:6379"
+      - "8001:8001"
+    # 持久化，重启数据不丢失
+    volumes:
+      - redis_stack_data:/data
+    environment:
+      - REDIS_ARGS=--appendonly yes

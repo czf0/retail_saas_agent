@@ -1,0 +1,31 @@
+# obs-stack/prometheus.yml
+# Prometheus 抓取配置.
+#
+# 双抓取设计 (互补):
+# 1. otel-collector:8889 — 抓取 OTel SDK 经 Collector 转发的原生指标 (含直方图分桶 _bucket, 支持 histogram_quantile 算 P99);
+# 2. host.docker.internal:8000/metrics — 直连 Python 进程 mirror 快照 (含 avg 字段, OTel 直方图原生不导出 avg).
+# 两者覆盖工具统计与指标大盘所需的全部维度.
+
+global:
+  scrape_interval: 15s          # 默认 15 秒抓取一次
+  evaluation_interval: 15s      # 告警规则评估间隔
+
+rule_files:
+  - /etc/prometheus/prometheus-rules.yml
+
+scrape_configs:
+  # 1. 抓取 OTel Collector 的 prometheus exporter (Python OTLP 推送的指标经此转发, 含直方图分桶)
+  - job_name: "otel-collector"
+    static_configs:
+      - targets: ["otel-collector:8889"]
+        labels:
+          source: "otel-collector"
+
+  # 2. 直接抓取 Python /metrics (备用直连, 暴露进程内 mirror 快照, 含 avg 字段)
+  #    host.docker.internal: Docker Desktop 内置 DNS, 容器访问 Windows host 上的 Python 服务
+  - job_name: "python-agent-direct"
+    static_configs:
+      - targets: ["host.docker.internal:8000"]
+        labels:
+          source: "python-direct"
+    metrics_path: /metrics

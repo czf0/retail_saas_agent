@@ -1,0 +1,242 @@
+// ============================================================
+// SCSS mixins（通过 @use 引入，不依赖全局注入）
+// 【改造】新增 card-surface / page-header / respond-to / chat-* 系列公共 mixin，
+//        消除多组件重复 CSS（约束 7）。chat-* 供 agent 全屏对话与悬浮对话弹窗共用。
+// 显式 @use variables.scss：mixin 内引用 $gh-* 变量，需自包含变量定义
+// ============================================================
+@use './variables.scss' as *;
+
+// flex 居中
+@mixin flex-center {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+// flex 居中（仅水平）
+@mixin flex-center-h {
+  display: flex;
+  justify-content: center;
+}
+
+// flex 两端对齐
+@mixin flex-between {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+// 文本省略（单行）
+@mixin ellipsis {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+// 文本省略（多行）
+@mixin ellipsis-multi($lines: 2) {
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: $lines;
+}
+
+// GitHub 风格滚动条
+@mixin scrollbar($width: 10px) {
+  &::-webkit-scrollbar {
+    width: $width;
+    height: $width;
+  }
+  &::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  &::-webkit-scrollbar-thumb {
+    background: #30363d;
+    border-radius: 5px;
+    &:hover {
+      background: #6e7681;
+    }
+  }
+  // Firefox
+  scrollbar-width: thin;
+  scrollbar-color: #30363d transparent;
+}
+
+// ---------- 响应式断点 ----------
+// 用法：@include respond-to(mobile) { ... }
+@mixin respond-to($bp) {
+  @if $bp == mobile {
+    @media (max-width: 768px) { @content; }
+  } @else if $bp == tablet {
+    @media (max-width: 1024px) { @content; }
+  } @else if $bp == desktop {
+    @media (min-width: 1025px) { @content; }
+  }
+}
+
+// ---------- 卡片表面（统一卡片底色 / 边框 / 圆角，供 GhCard 及各业务卡片复用） ----------
+@mixin card-surface {
+  background-color: $gh-bg-secondary;
+  border: 1px solid $gh-border;
+  border-radius: $radius-md;
+  transition: border-color $transition-base, box-shadow $transition-base;
+}
+
+// ---------- 页面标题区排版 ----------
+@mixin page-header-title {
+  font-size: 20px;
+  font-weight: 600;
+  color: $gh-text;
+  line-height: 1.4;
+}
+
+// ============================================================
+// 对话气泡公共 mixin（约束 6：用户 / AI / 工具调用 层次分明）
+// 供 views/agent/index.vue 与 components/chat/MessageList.vue 在各自 BEM 选择器内 @include
+// ============================================================
+
+// 头像基础（圆形容器）
+@mixin chat-avatar($size: 32px) {
+  width: $size;
+  height: $size;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: $gh-bg-tertiary;
+  border: 1px solid $gh-border;
+  color: $gh-text-secondary;
+  flex-shrink: 0;
+}
+
+// 用户头像：商务蓝实心
+@mixin chat-avatar-user {
+  background-color: $gh-link;
+  color: #fff;
+  border-color: transparent;
+}
+
+// 气泡基础
+@mixin chat-bubble {
+  max-width: 80%;
+  padding: 10px 14px;
+  background-color: $gh-bg-secondary;
+  border: 1px solid $gh-border;
+  border-radius: $radius-md;
+  color: $gh-text;
+  word-break: break-word;
+}
+
+// 用户气泡：商务蓝浅底 + 蓝色描边 + 右下收尖（呼应右对齐）
+@mixin chat-bubble-user {
+  background-color: $gh-accent-soft;
+  border-color: $gh-accent-border;
+  border-radius: $radius-md $radius-md 4px $radius-md;
+}
+
+// AI 智能体气泡：卡片面 + 左下收尖
+@mixin chat-bubble-assistant {
+  border-radius: $radius-md $radius-md $radius-md 4px;
+}
+
+// 工具调用气泡（HITL 审批卡）：弱警示底 + 等宽参数区，与普通气泡明显区分
+@mixin chat-bubble-tool {
+  background-color: $gh-warning-soft;
+  border-color: $gh-warning;
+  border-radius: $radius-md;
+}
+
+// 错误态气泡描边
+@mixin chat-bubble-error {
+  border-color: $gh-danger;
+}
+
+// 流式光标（▌ 闪烁）
+@mixin chat-cursor {
+  display: inline-block;
+  color: $gh-link;
+  animation: gh-blink 1s steps(2, start) infinite;
+  margin-left: 2px;
+}
+
+// 正文基础排版
+@mixin chat-content {
+  font-size: 14px;
+  line-height: 1.6;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+// Markdown 正文区样式（assistant 渲染 HTML 后的元素排版）
+@mixin chat-md {
+  white-space: normal;
+  :deep(p) {
+    margin: 0 0 8px;
+    &:last-child { margin-bottom: 0; }
+  }
+  :deep(pre) {
+    background-color: $gh-bg;
+    border: 1px solid $gh-border-muted;
+    border-radius: $radius-sm;
+    padding: 10px 12px;
+    overflow-x: auto;
+    font-family: $font-mono;
+    font-size: 12.5px;
+    margin: 8px 0;
+    code {
+      background-color: transparent;
+      padding: 0;
+      color: $gh-text;
+    }
+  }
+  :deep(code) {
+    background-color: $gh-bg-tertiary;
+    padding: 1px 5px;
+    border-radius: 4px;
+    font-family: $font-mono;
+    font-size: 12.5px;
+    color: $gh-warning;
+  }
+  :deep(table) {
+    border-collapse: collapse;
+    width: 100%;
+    margin: 8px 0;
+    th, td {
+      border: 1px solid $gh-border-muted;
+      padding: 6px 10px;
+      font-size: 13px;
+    }
+    th {
+      background-color: $gh-bg-tertiary;
+      color: $gh-text;
+      font-weight: 600;
+    }
+  }
+  :deep(ul), :deep(ol) {
+    padding-left: 22px;
+    margin: 6px 0;
+  }
+  :deep(blockquote) {
+    margin: 8px 0;
+    padding: 6px 14px;
+    border-left: 3px solid $gh-link;
+    background-color: $gh-bg-tertiary;
+    color: $gh-text-secondary;
+    border-radius: 0 $radius-sm $radius-sm 0;
+  }
+  :deep(a) {
+    color: $gh-link;
+    text-decoration: none;
+    &:hover { text-decoration: underline; }
+  }
+  :deep(h1), :deep(h2), :deep(h3), :deep(h4) {
+    margin: 12px 0 6px;
+    font-weight: 600;
+    color: $gh-text;
+  }
+  :deep(h1) { font-size: 17px; }
+  :deep(h2) { font-size: 16px; }
+  :deep(h3) { font-size: 15px; }
+  :deep(h4) { font-size: 14px; }
+}
+

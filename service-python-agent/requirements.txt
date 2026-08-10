@@ -1,0 +1,36 @@
+# ===================== service-python-agent 依赖清单 =====================
+# Web 框架与流式依赖
+fastapi==0.110.0
+uvicorn[standard]==0.27.1
+sse-starlette==2.0.0
+
+# 数据校验与配置
+pydantic==2.6.1
+pydantic-settings==2.1.0
+python-dotenv==1.0.1
+
+# HTTP 客户端（LLM 调用、Java 后端透传）
+httpx==0.27.0
+
+# Redis 会话存储
+redis==5.0.1
+
+# 数值计算（向量相似度、RRF 融合）
+numpy==1.26.4
+
+# 分词（BM25 关键词检索）
+jieba==0.42.1
+
+# ===================== OpenTelemetry 可观测体系 =====================
+# OTel API: trace/metrics 标准接口
+opentelemetry-api==1.33.0
+# OTel SDK: TracerProvider/MeterProvider 实现
+opentelemetry-sdk==1.33.0
+# OTLP gRPC 导出器 (对接 obs-stack/otel-collector :4317)
+opentelemetry-exporter-otlp-proto-grpc==1.33.0
+# FastAPI 请求级自动插桩 (main.py 调 instrument_app)
+opentelemetry-instrumentation-fastapi==0.54b0
+# httpx 出站调用自动插桩 (LLM/Java 透传链路)
+opentelemetry-instrumentation-httpx==0.54b0
+# Redis 访问自动插桩 (会话存储链路)
+opentelemetry-instrumentation-redis==0.54b0

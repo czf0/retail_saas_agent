@@ -1,0 +1,16 @@
+# obs-stack/grafana/provisioning/dashboards/dashboards.yml
+# Grafana dashboard provider 配置 (从文件自动加载 dashboard JSON).
+#
+# 启动时扫描 /etc/grafana/provisioning/dashboards 目录下所有 .json,
+# 加载到 Agent 文件夹, 30 秒检测一次更新.
+
+apiVersion: 1
+providers:
+  - name: agent-dashboards
+    orgId: 1
+    folder: Agent
+    type: file
+    disableDeletion: false
+    updateIntervalSeconds: 30
+    options:
+      path: /etc/grafana/provisioning/dashboards

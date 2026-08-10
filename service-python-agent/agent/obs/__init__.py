@@ -1,0 +1,1 @@
+"""agent 自包含的可观测组件（metrics/tracer，由原顶层 obs/metrics、obs/tracer 内聚而来）。"""

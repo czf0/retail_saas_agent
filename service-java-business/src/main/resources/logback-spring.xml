@@ -1,0 +1,131 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Logback 日志框架配置（Spring Boot 约定文件名 logback-spring.xml，支持 springProfile 标签）。
+  设计要点：
+    1. 分级文件输出：app-info.log（INFO+）、app-error.log（ERROR）、app-debug.log（DEBUG，仅 dev）
+    2. SizeAndTimeBasedRollingPolicy：按天 + 按大小（200MB）双触发滚动，自动 .gz 归档
+    3. 保留策略：info/error 30 天，debug 7 天，总大小上限 10GB
+    4. AsyncAppender 包装 INFO 文件输出，queueSize=512，discardingThreshold=0（永不丢弃 WARN+）
+    5. ERROR 单独走同步 RollingFileAppender，双重保障异常日志不丢
+    6. MDC 上下文：traceId / tenantId / userId 三段式，便于按链路/租户/用户检索
+    7. springProfile 区分 dev（控制台彩色 + DEBUG）/ prod（仅文件 + INFO）
+-->
+<configuration scan="false" scanPeriod="30 seconds">
+
+    <!-- ========== 公共属性 ========== -->
+    <springProperty name="LOG_PATH" source="logging.file.path" defaultValue="./logs"/>
+    <property name="LOG_PATTERN"
+              value="%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level [%X{traceId:-},%X{tenantId:-},%X{userId:-}] %logger{40} - %msg%n"/>
+    <property name="LOG_PATTERN_COLOR"
+              value="%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %highlight(%-5level) [%X{traceId:-},%X{tenantId:-},%X{userId:-}] %cyan(%logger{40}) - %msg%n"/>
+
+    <!-- ========== Console Appender（dev 彩色高亮） ========== -->
+    <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>${LOG_PATTERN_COLOR}</pattern>
+            <charset>UTF-8</charset>
+        </encoder>
+    </appender>
+
+    <!-- ========== Info File Appender（INFO+，按天滚动，200MB，保留30天） ========== -->
+    <appender name="FILE_INFO" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>${LOG_PATH}/app-info.log</file>
+        <!-- ThresholdFilter：INFO 及以上级别通过 -->
+        <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
+            <level>INFO</level>
+        </filter>
+        <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
+            <fileNamePattern>${LOG_PATH}/app-info.%d{yyyy-MM-dd}.%i.log.gz</fileNamePattern>
+            <maxFileSize>200MB</maxFileSize>
+            <maxHistory>30</maxHistory>
+            <totalSizeCap>10GB</totalSizeCap>
+        </rollingPolicy>
+        <encoder>
+            <pattern>${LOG_PATTERN}</pattern>
+            <charset>UTF-8</charset>
+        </encoder>
+    </appender>
+
+    <!-- ========== Async Wrapper for Info File（异步写入，提升性能） ========== -->
+    <!-- queueSize=512：异步队列容量；discardingThreshold=0：队列满时永不丢弃 WARN+ 级别日志 -->
+    <appender name="FILE_INFO_ASYNC" class="ch.qos.logback.classic.AsyncAppender">
+        <queueSize>512</queueSize>
+        <discardingThreshold>0</discardingThreshold>
+        <neverBlock>true</neverBlock>
+        <appender-ref ref="FILE_INFO"/>
+    </appender>
+
+    <!-- ========== Error File Appender（仅 ERROR，同步写入，确保异常不丢） ========== -->
+    <appender name="FILE_ERROR" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>${LOG_PATH}/app-error.log</file>
+        <!-- LevelFilter：仅 ERROR 级别通过（onMatch 接受，onMismatch 拒绝其他级别） -->
+        <filter class="ch.qos.logback.classic.filter.LevelFilter">
+            <level>ERROR</level>
+            <onMatch>ACCEPT</onMatch>
+            <onMismatch>DENY</onMismatch>
+        </filter>
+        <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
+            <fileNamePattern>${LOG_PATH}/app-error.%d{yyyy-MM-dd}.%i.log.gz</fileNamePattern>
+            <maxFileSize>200MB</maxFileSize>
+            <maxHistory>30</maxHistory>
+            <totalSizeCap>5GB</totalSizeCap>
+        </rollingPolicy>
+        <encoder>
+            <pattern>${LOG_PATTERN}</pattern>
+            <charset>UTF-8</charset>
+        </encoder>
+    </appender>
+
+    <!-- ========== Debug File Appender（DEBUG，仅 dev profile，保留7天） ========== -->
+    <appender name="FILE_DEBUG" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>${LOG_PATH}/app-debug.log</file>
+        <filter class="ch.qos.logback.classic.filter.LevelFilter">
+            <level>DEBUG</level>
+            <onMatch>ACCEPT</onMatch>
+            <onMismatch>DENY</onMismatch>
+        </filter>
+        <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
+            <fileNamePattern>${LOG_PATH}/app-debug.%d{yyyy-MM-dd}.%i.log.gz</fileNamePattern>
+            <maxFileSize>100MB</maxFileSize>
+            <maxHistory>7</maxHistory>
+            <totalSizeCap>2GB</totalSizeCap>
+        </rollingPolicy>
+        <encoder>
+            <pattern>${LOG_PATTERN}</pattern>
+            <charset>UTF-8</charset>
+        </encoder>
+    </appender>
+
+    <!-- ========== 开发环境：控制台 + 全级别文件 + DEBUG 级别 ========== -->
+    <springProfile name="dev">
+        <root level="INFO">
+            <appender-ref ref="CONSOLE"/>
+            <appender-ref ref="FILE_INFO_ASYNC"/>
+            <appender-ref ref="FILE_ERROR"/>
+            <appender-ref ref="FILE_DEBUG"/>
+        </root>
+        <!-- com.retail 包下 DEBUG 级别（mapper SQL 可见，联调期使用） -->
+        <logger name="com.retail" level="DEBUG"/>
+    </springProfile>
+
+    <!-- ========== 生产环境：仅文件输出，INFO 级别 ========== -->
+    <springProfile name="prod">
+        <root level="INFO">
+            <appender-ref ref="FILE_INFO_ASYNC"/>
+            <appender-ref ref="FILE_ERROR"/>
+        </root>
+        <logger name="com.retail" level="INFO"/>
+    </springProfile>
+
+    <!-- ========== 默认 profile（未设置 spring.profiles.active 时生效，等同于 dev） ========== -->
+    <springProfile name="default">
+        <root level="INFO">
+            <appender-ref ref="CONSOLE"/>
+            <appender-ref ref="FILE_INFO_ASYNC"/>
+            <appender-ref ref="FILE_ERROR"/>
+            <appender-ref ref="FILE_DEBUG"/>
+        </root>
+        <logger name="com.retail" level="DEBUG"/>
+    </springProfile>
+
+</configuration>

@@ -1,0 +1,60 @@
+# ===================== other_agent 专属依赖清单 =====================
+# 仅 other_agent（LangChain/LangGraph/OTel 工具链实现）所需依赖。
+# 与 requirements.txt（base）隔离，按需安装：pip install -r other_agent/requirements.txt
+# 安装后即可运行 examples/compare_chat.py 对比两套方案。
+
+# ---- LangChain 核心（0.3 稳定线）----
+# LangChain 主包：提供 ChatModel/Tool/Retriever/Document 等标准抽象与组合
+langchain>=0.3.27
+# OpenAI 兼容 ChatModel 与 Embeddings（对接本地 Ollama / vLLM 等 OpenAI 协议服务）
+langchain-openai>=0.3.28
+# 社区集成：BM25Retriever、FAISS 向量库等
+langchain-community>=0.3.27
+# HuggingFace 嵌入模型加载（BGE 本地嵌入）——默认改用 OpenAI 兼容端点复用 Ollama 的 bge 模型，避免拉取 torch
+# 如需进程内本地 BGE，取消下行注释（将额外安装 sentence-transformers + torch，约 2.5GB）：
+# langchain-huggingface>=0.2.0
+# 注：langchain-core 与 langchain-text-splitters 由 langchain 自动解析兼容版本，不显式固定
+
+# ---- 向量库集成（可插拔，按 LC_VECTOR_STORE_TYPE 启用）----
+# Chroma：Windows 默认，嵌入式本地向量库（无服务端、跨平台）
+langchain-chroma>=0.2.4
+chromadb>=0.6.3
+# Milvus：Linux/Mac 下 Milvus Lite 本地文件模式（Windows 官方不支持）
+langchain-milvus>=0.4.0
+pymilvus>=2.5.16
+# BM25 关键词检索（EnsembleRetriever 混合召回之一）
+rank-bm25==0.2.2
+
+# ---- LangGraph 编排（1.x 稳定线，需 Python>=3.10，当前 3.13 满足）----
+# StateGraph / Checkpointer 等图编排核心
+langgraph==1.2.9
+# 预构建 Agent：create_react_agent / ToolNode / tools_condition（1.x 起拆为独立包）
+langgraph-prebuilt==1.1.0
+# SqliteSaver：基于本地 SQLite 的图状态持久化
+langgraph-checkpoint-sqlite==3.1.0
+# RedisSaver：基于 Redis 的图状态持久化（HITL 跨 HTTP 请求续接 graph 状态的必需方案）
+langgraph-checkpoint-redis==0.5.1
+
+# ---- BGE 本地嵌入模型（HuggingFace sentence-transformers 后端，可选）----
+# 默认使用 OpenAI 兼容端点（Ollama bge），无需安装；如需进程内本地 BGE 取消下行注释：
+# sentence-transformers==3.4.1
+
+# ---- 知识库文件解析（D2 文件上传管控：Java 转发原始文件到 Python 解析）----
+# PDF 文本/表格抽取（零售知识库促销规则/盘点报告常以 PDF 上传）
+pdfplumber>=0.11.0
+# Word 文档解析（docx，SOP/政策文档常以 docx 上传）
+python-docx>=1.1.0
+
+# ---- OpenTelemetry 独立可观测体系（other_agent 专用，不接入现有 obs）----
+# OTel API：trace/metrics/attributes 标准接口
+opentelemetry-api==1.33.0
+# OTel SDK：TracerProvider/MeterProvider 实现
+opentelemetry-sdk==1.33.0
+# OTLP 导出器：可对接 Jaeger/Tempo/Prometheus（LC_OTEL_EXPORTER=otlp 时启用）
+opentelemetry-exporter-otlp==1.33.0
+# 自动插桩：FastAPI 请求链路
+opentelemetry-instrumentation-fastapi==0.54b0
+# 自动插桩：httpx 出站调用（LLM/工具 HTTP 透传）
+opentelemetry-instrumentation-httpx==0.54b0
+# 自动插桩：Redis 访问
+opentelemetry-instrumentation-redis==0.54b0

@@ -1,0 +1,171 @@
+// ============================================================
+// 设计令牌（Design Tokens）
+// 通过 vite.config.ts additionalData 全局注入，业务组件可直接使用 $gh-bg 等变量
+//
+// 【改造说明】原为 GitHub Dark 暗色单主题静态值；现改为「CSS 自定义属性 + SCSS 别名」双主题方案：
+//   1. :root      定义浅色板（默认主题）
+//   2. :root.dark 定义暗色板（GitHub Dark 调校，主色由刺眼 #58a6ff 收敛为稳重 #4b8bf5）
+//   3. $gh-* SCSS 变量名全部保留（不推翻既有引用），值改为 var(--gh-*)，自动随主题切换
+//   4. 圆角 / 字体 / 布局尺寸 / 过渡 与主题无关，保持静态 SCSS 值
+// 主色：稳重商务蓝 #2563eb（浅色）/ #4b8bf5（暗色提亮保证对比）
+// ============================================================
+
+// ---------- 主题色板：浅色（默认） ----------
+:root {
+  // 背景层（由浅到深：页面底 → 卡片 → 三级面）
+  --gh-bg:           #f5f7fa;  // 页面底色
+  --gh-bg-secondary: #ffffff;  // 卡片 / 侧边栏 / 顶栏 / 对话框
+  --gh-bg-tertiary:  #eef1f6;  // 输入框 / 表头 / 悬停行 / tag-info 背景
+  --gh-bg-overlay:   #ffffff;  // 遮罩层背景
+
+  // 边框
+  --gh-border:        #e3e8ef;  // 主边框
+  --gh-border-muted:  #eef1f6;  // 弱边框 / 表格内分隔线
+
+  // 文字
+  --gh-text:            #1f2937;  // 主文字
+  --gh-text-secondary:  #6b7280;  // 次要文字 / 标签文字
+  --gh-text-placeholder: #9ca3af;  // 占位符 / 滚动条 hover
+
+  // 功能色（低饱和稳重商务色板，避免刺眼）
+  --gh-link:        #2563eb;  // 主色 / 链接（商务蓝）
+  --gh-link-hover:  #1d4ed8;  // 主色 hover（更深）
+  --gh-primary:     #2563eb;  // 主色别名（与 link 同值，语义化）
+  --gh-primary-hover: #1d4ed8;
+  --gh-success:     #16a34a;
+  --gh-warning:     #d97706;
+  --gh-danger:      #dc2626;
+  --gh-accent:      #3b82f6;  // 辅助蓝（光晕 / 装饰）
+
+  // 柔和背景（soft 系列，用于 tag / badge / 选中态）
+  --gh-accent-soft:   rgba(37, 99, 235, 0.10);
+  --gh-success-soft:  rgba(22, 163, 74, 0.12);
+  --gh-warning-soft:  rgba(217, 119, 6, 0.12);
+  --gh-danger-soft:   rgba(220, 38, 38, 0.10);
+  --gh-info-soft:     rgba(107, 114, 128, 0.12);
+  // 柔和边框（用于用户消息气泡的蓝色描边，半透明适配双主题）
+  --gh-accent-border: rgba(37, 99, 235, 0.35);
+
+  // 阴影（浅色：柔和克制，不浮夸）
+  --shadow-sm: 0 1px 2px rgba(16, 24, 40, 0.04), 0 1px 3px rgba(16, 24, 40, 0.06);
+  --shadow-md: 0 4px 12px rgba(16, 24, 40, 0.08);
+  --shadow-lg: 0 12px 32px rgba(16, 24, 40, 0.12);
+
+  // 实体主色按钮填充色（比 link 略深，保证白字对比度达 AA）
+  --gh-btn-primary:        #2563eb;
+  --gh-btn-primary-hover:  #1d4ed8;
+  --gh-btn-primary-active: #1d4fbc;
+
+  // 遮罩
+  --gh-mask: rgba(15, 23, 42, 0.45);
+}
+
+// ---------- 主题色板：暗色（.dark 时生效，特异性高于 :root） ----------
+:root.dark {
+  // 背景层（由深到浅）
+  --gh-bg:           #0d1117;  // 页面底色（最深）
+  --gh-bg-secondary: #161b22;  // 卡片 / 侧边栏 / 顶栏 / 对话框
+  --gh-bg-tertiary:  #21262d;  // 输入框 / 表头 / 悬停行 / tag-info 背景
+  --gh-bg-overlay:   #161b22;  // 遮罩层背景
+
+  // 边框
+  --gh-border:        #30363d;  // 主边框
+  --gh-border-muted:  #21262d;  // 弱边框 / 表格内分隔线
+
+  // 文字
+  --gh-text:            #c9d1d9;  // 主文字
+  --gh-text-secondary:  #8b949e;  // 次要文字 / 标签文字
+  --gh-text-placeholder: #6e7681;  // 占位符 / 滚动条 hover
+
+  // 功能色（暗底下提亮以保证对比，主色由 #58a6ff 收敛为稳重的 #4b8bf5）
+  --gh-link:        #4b8bf5;  // 主色 / 链接
+  --gh-link-hover:  #79c0ff;
+  --gh-primary:     #4b8bf5;
+  --gh-primary-hover: #6ea3f7;
+  --gh-success:     #3fb950;
+  --gh-warning:     #d29922;
+  --gh-danger:      #f85149;
+  --gh-accent:      #388bfd;
+
+  // 柔和背景（暗底下适当提高不透明度以可见）
+  --gh-accent-soft:   rgba(56, 139, 253, 0.18);
+  --gh-success-soft:  rgba(63, 185, 80, 0.15);
+  --gh-warning-soft:  rgba(210, 153, 34, 0.15);
+  --gh-danger-soft:   rgba(248, 81, 73, 0.15);
+  --gh-info-soft:     rgba(139, 148, 158, 0.15);
+  // 柔和边框（暗底下蓝色描边）
+  --gh-accent-border: rgba(56, 139, 253, 0.4);
+
+  // 阴影（暗色：极深，配合深底）
+  --shadow-sm: 0 0 transparent;
+  --shadow-md: 0 8px 24px rgba(1, 4, 9, 0.85);
+  --shadow-lg: 0 16px 32px rgba(1, 4, 9, 0.9);
+
+  // 实体主色按钮填充色（暗底下用 #1f6feb，白字对比度达 AA；原设计即此值）
+  --gh-btn-primary:        #1f6feb;
+  --gh-btn-primary-hover:  #388bfd;
+  --gh-btn-primary-active: #1f6feb;
+
+  // 遮罩
+  --gh-mask: rgba(0, 0, 0, 0.5);
+}
+
+// ============================================================
+// SCSS 别名：保留全部 $gh-* 变量名，值引用 CSS 自定义属性
+// 业务组件无需改动即可随主题切换
+// ============================================================
+
+// ---------- 背景层 ----------
+$gh-bg:           var(--gh-bg);
+$gh-bg-secondary: var(--gh-bg-secondary);
+$gh-bg-tertiary:  var(--gh-bg-tertiary);
+$gh-bg-overlay:   var(--gh-bg-overlay);
+
+// ---------- 边框 ----------
+$gh-border:        var(--gh-border);
+$gh-border-muted:  var(--gh-border-muted);
+
+// ---------- 文字 ----------
+$gh-text:            var(--gh-text);
+$gh-text-secondary:  var(--gh-text-secondary);
+$gh-text-placeholder: var(--gh-text-placeholder);
+
+// ---------- 功能色 ----------
+$gh-link:        var(--gh-link);
+$gh-link-hover:  var(--gh-link-hover);
+$gh-primary:     var(--gh-primary);
+$gh-primary-hover: var(--gh-primary-hover);
+$gh-success:     var(--gh-success);
+$gh-warning:     var(--gh-warning);
+$gh-danger:      var(--gh-danger);
+$gh-accent:      var(--gh-accent);
+
+// ---------- 柔和背景 ----------
+$gh-accent-soft:   var(--gh-accent-soft);
+$gh-success-soft:  var(--gh-success-soft);
+$gh-warning-soft:  var(--gh-warning-soft);
+$gh-danger-soft:   var(--gh-danger-soft);
+$gh-info-soft:     var(--gh-info-soft);
+$gh-accent-border: var(--gh-accent-border);
+
+// ---------- 圆角（与主题无关，保持静态） ----------
+$radius-sm: 6px;
+$radius-md: 8px;
+$radius-lg: 12px;
+
+// ---------- 阴影（引用 CSS 变量，随主题） ----------
+$shadow-sm: var(--shadow-sm);
+$shadow-md: var(--shadow-md);
+$shadow-lg: var(--shadow-lg);
+
+// ---------- 字体（与主题无关，保持静态） ----------
+$font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans", Helvetica, Arial, sans-serif;
+$font-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
+
+// ---------- 布局尺寸（与主题无关，保持静态） ----------
+$sidebar-width: 240px;
+$sidebar-collapsed-width: 60px;
+$header-height: 56px;
+
+// ---------- 过渡（与主题无关，保持静态） ----------
+$transition-base: 0.2s ease;

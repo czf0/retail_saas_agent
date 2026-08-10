@@ -1,0 +1,54 @@
+# obs-stack/otel-collector-config.yaml
+# OTel Collector 配置: 接收 OTLP → 分发 traces→Tempo, metrics→Prometheus exporter.
+# 文档: https://opentelemetry.io/docs/collector/configuration/
+
+receivers:
+  otlp:
+    protocols:
+      grpc:
+        endpoint: 0.0.0.0:4317     # Python OTLPSpanExporter/OTLPMetricExporter 推送至此
+      http:
+        endpoint: 0.0.0.0:4318     # 备用 HTTP 接收
+
+processors:
+  # 内存限制: 防止突发流量撑爆 Collector 内存
+  memory_limiter:
+    check_interval: 2s
+    limit_percentage: 80
+    spike_limit_percentage: 25
+  # 批处理: 降低下游请求频率 (5 秒一批或满 512 条)
+  batch:
+    timeout: 5s
+    send_batch_size: 512
+
+exporters:
+  # Traces → Grafana Tempo (Tempo 原生支持 OTLP gRPC 接收, 用 otlp exporter 直连)
+  otlp/tempo:
+    endpoint: tempo:4317           # docker 网络内按服务名访问 Tempo distributor
+    tls:
+      insecure: true
+  # Metrics → Prometheus exporter (Collector 自身暴露 :8889 供 Prometheus 抓取)
+  prometheus:
+    endpoint: 0.0.0.0:8889
+    # 不设 namespace: 让 Collector 转发指标与 Python 直连 /metrics 同名, 便于 Prometheus 合并抓取
+    send_timestamps: false
+    metric_expiration: 5m
+    # 把 resource attrs (service.name 等) 转为 Prometheus labels, 便于按服务筛选
+    resource_to_telemetry_conversion:
+      enabled: true
+
+service:
+  pipelines:
+    # Trace 链路: 接收 → 限内存 → 批处理 → 导出 Tempo
+    traces:
+      receivers: [otlp]
+      processors: [memory_limiter, batch]
+      exporters: [otlp/tempo]
+    # 指标: 接收 → 限内存 → 批处理 → 导出 Prometheus exporter
+    metrics:
+      receivers: [otlp]
+      processors: [memory_limiter, batch]
+      exporters: [prometheus]
+  telemetry:
+    logs:
+      level: info

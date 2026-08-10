@@ -1,0 +1,128 @@
+# 生成零售SaaS项目 service-python-agent 纯底层AI基础框架
+## 顶层全局硬性约束（优先级最高，违规直接重写）
+1. 本框架仅通用底层基座，**禁止任何零售、门店、库存、商品、订单业务代码**；所有业务扩展仅保留# TODO 业务自行实现占位注释，不落地业务逻辑。
+2. 链路规范：TraceID、SpanID统一由上游Java网关生成，Python不实现全局ID生成逻辑；仅从HTTP请求头X-Trace-ID、X-Span-ID读取、上下文存储、下游自动透传；
+   兜底规则：若请求无上游Trace标识，仅生成本地临时日志标识，**不回传给Java下游服务**，不破坏统一由Java管控链路ID的规范。
+3. 适配Windows本地开发环境，服务地址硬编码127.0.0.1，禁止引入Nacos、服务注册中心、云厂商私有SDK。
+4. Python版本3.10+，Web框架固定FastAPI，流式依赖sse-starlette；仅对外暴露单一对话流式接口 /api/v1/agent/stream/chat，无细分业务接口。
+5. 框架分层严格遵循下文固定目录结构，不可随意增删文件夹、调整层级；所有抽象基类、注册中心、切面能力完整实现。
+6. 输出格式要求：第一块输出完整全层级文件树，随后按路径顺序输出每一份文件完整可运行代码块，格式【文件路径】+ ```python 代码```；禁止额外解读、README、业务示例、优化建议。
+7. 四条强制架构约束，必须严格落地：
+   7.1 Java后端工具仅提供通用基础HTTP GET/POST透传能力，不预制封装任何业务接口，最小化与Java应用耦合；
+   7.2 config配置强制拆分为5个独立文件，禁止所有配置聚合在单文件，避免后期配置项膨胀；
+   7.3 agent全局调度文件命名为 orchestrator.py，替换易混淆的 workflow.py，区分顶层调度与flow目录下流程范式；
+   7.4 新增独立完整RAG检索增强模块，封装向量化、向量库、召回、重排全链路通用底座，无行业业务知识库硬编码。
+
+## 必须完整落地的核心模块（缺失任一直接作废）
+1. LLM三层调用范式：同步单次、SSE流式分片、批量异步批量调用完整封装；
+2. agent/memory全会话生命周期管理：Redis持久存储、多租户会话隔离、上下文窗口Token裁剪、会话过期自动清理、并发读写分布式锁；预留冷热分层存储扩展接口；
+3. agent/flow AI编排四层体系：三大标准范式+SubAgent扩展目录
+   - WorkFlow线性流程、ReAct思考循环、Plan and Executor规划执行完整实现；
+   - subagent目录预留多子代理嵌套抽象骨架，内置路由分发扩展预留；
+   - 全部流程基类统一前置/后置钩子，自动注入上下文、链路埋点、指标统计；支持范式互相嵌套调用；
+   - 顶层统一调度文件：agent/orchestrator.py，聚合所有flow范式；
+4. 独立完整agent/rag检索增强底座模块（新增核心模块）：
+   向量化编码器抽象、向量库操作顶层封装、多路召回（关键词BM25+向量相似度）、RRF融合、Rerank重排、上下文组装；全部通用抽象，无业务知识库，支持动态加载知识库；接入全局观测埋点、自动携带租户隔离标识；
+5. obs完整可观测三件套：
+   logger全局统一日志（自动携带traceId/tenantId/sessionId/span标签）、tracer嵌套Span链路埋点、metrics内存指标计数器；预留指标持久化扩展接口，兼容Prometheus后续接入；全局异常自动打点上报指标。
+6. tool分层高扩展工具体系（重构方案+优化建议落地）
+   - 顶层统一抽象BaseTool + 全局工具注册中心，提供@register_tool装饰器自动注册工具，无需手动注册；
+   - 统一工具入参/出参Schema，所有工具执行统一切面封装：超时、重试、熔断容错逻辑；
+   - 工具分层隔离：内置基础工具（java/db）、自定义业务扩展工具custom；
+   - DB查询工具做安全限制：禁止LLM直接传入原生SQL，仅支持参数化模板查询，自动拼接租户过滤条件，防止越权全表扫描；
+   - Java后端工具仅通用HTTP基础透传，无预制业务封装，降低Java侧依赖耦合。
+7. 线程本地上下文隔离：存储tenantId、storeId、上游traceId、spanId、sessionId；全局分层异常体系，错误码与Java后端一一对应；统一返回体R结构和Java完全对齐。
+8. 配置规范：config拆分多文件分层管理；配置全部读取本地.env开发/.env.prod生产两套环境文件，settings内置环境切换逻辑；新增rag独立配置文件。
+9. 无utils/trace_util.py，彻底移除Python侧TraceID生成工具。
+
+## 固定完整目录结构（整合所有分层优化+全部变更+新增RAG模块，不可修改）
+service-python-agent
+├─ main.py                # 项目唯一启动入口
+├─ requirements.txt       # 全套依赖清单
+├─ .env                   # 开发环境配置
+├─ .env.prod              # 生产环境配置（区分环境优化）
+├─ config/
+│  ├─ base_settings.py        # 基础服务、端口、环境通用配置
+│  ├─ llm_settings.py         # LLM相关参数独立拆分
+│  ├─ observability_settings.py # obs观测指标、日志配置
+│  ├─ storage_settings.py     # MySQL、Redis连接、会话存储配置
+│  ├─ agent_flow_settings.py # Agent编排、流程、工具全局参数
+│  └─ rag_settings.py         # 【新增】RAG向量库、召回、重排独立配置
+├─ schema/                 # 和Java DTO一一对应，Pydantic模型
+│  ├─ agent_schema.py     # 对话入参、流式分片返回模型
+│  ├─ tool_schema.py      # 工具通用入参/出参抽象模型
+│  ├─ rag_schema.py       # 【新增】RAG检索、文档块、召回结果、重排结构体
+│  └─ common_schema.py    # 通用基础结构体、观测指标模型
+├─ core/                   # 全局底层核心框架层
+│  ├─ context.py          # 线程本地存储：租户ID、门店ID、上游传入traceId、spanId、sessionId上下文隔离
+│  ├─ exception.py        # 分层自定义异常 + 全局错误码枚举，新增RAG专属异常，和Java错误码完全对齐
+│  ├─ response.py         # 统一返回体R，字段code/msg/data/traceId完全匹配Java
+│  └─ middleware.py       # 全局请求拦截中间件，读取上游trace、tenantId注入上下文、自动观测埋点、缺失链路兜底本地标识
+├─ agent/                  # AI通用底座，无业务
+│  ├─ llm_client.py       # 完整实现三大调用范式：同步单次、SSE流式、异步批量
+│  ├─ memory/             # 完整Memory会话管理模块
+│  │  ├─ memory_store.py  # 会话持久层骨架（Redis存储）、冷热分层扩展接口预留
+│  │  ├─ memory_manager.py# 会话生命周期管理：创建/读取/裁剪上下文/过期清理/多租户隔离、分布式读写锁
+│  │  └─ memory_window.py # 上下文窗口截断、token简易估算裁剪逻辑
+│  ├─ rag/                # 【新增】完整RAG检索增强独立模块
+│  │  ├─ base_rag.py      # RAG顶层抽象基类，定义全链路标准流程
+│  │  ├─ embedder/
+│  │  │  └─ base_embedder.py # 向量化编码器抽象，预留多模型扩展
+│  │  ├─ vector_store/
+│  │  │  └─ base_vector.py # 向量数据库顶层抽象，兼容Milvus等向量库
+│  │  ├─ retriever.py     # 多路召回实现：BM25关键词检索 + 向量相似度检索
+│  │  ├─ fusion.py        # RRF多路召回结果融合算法实现
+│  │  ├─ reranker.py      # 重排模块抽象骨架
+│  │  └─ rag_engine.py    # RAG全链路统一调度入口（分块、向量化、召回、融合、重排、上下文组装）
+│  ├─ flow/               # AI四大编排范式目录
+│  │  ├─ base_flow.py     # 所有流程范式顶层抽象基类，统一前置后置观测钩子
+│  │  ├─ workflow_flow.py # WorkFlow 线性流程范式实现，支持分支串行节点
+│  │  ├─ react_flow.py    # ReAct 思考行动循环范式实现，对接全局工具调度中心、支持调用RAG引擎
+│  │  ├─ plan_exec_flow.py# Plan and Executor 规划执行范式实现，任务拆分汇总
+│  │  └─ subagent/        # 预留SubAgent多子代理扩展目录（空骨架，仅抽象类）
+│  │     ├─ base_subagent.py # SubAgent顶层抽象，预留嵌套多代理能力
+│  │     └─ agent_router.py  # 子代理分发路由预留骨架
+│  └─ orchestrator.py     # 【重命名】顶层统一编排调度入口，聚合所有flow范式、集成RAG引擎，支持范式嵌套调用
+├─ obs/                    # 完整可观测模块（必写，禁止省略）
+│  ├─ logger.py           # 全局统一日志封装，自动携带链路/租户/session标签
+│  ├─ tracer.py           # 链路Span埋点，支持嵌套子链路，仅复用上游Trace标识，不生成全局traceId
+│  └─ metrics.py          # 简易内存指标计数器：请求数、失败数、耗时、LLM调用计数、新增RAG检索/向量库指标；预留持久化扩展接口
+├─ tool/                   # 重构分层工具体系，带顶层抽象、自动注册、统一容错切面
+│  ├─ base/
+│  │  ├─ base_tool.py     # 工具顶层抽象父类，统一执行规范
+│  │  └─ tool_registry.py # 全局工具注册、调度中心，内置@register_tool装饰器、统一重试/超时熔断切面
+│  ├─ java/
+│  │  └─ java_backend_tool.py # 仅通用GET/POST HTTP透传工具，无预制业务接口，最小耦合Java后端
+│  ├─ db/
+│  │  └─ db_query_tool.py # 通用数据库查询工具，继承BaseTool；禁止原生SQL传入，仅参数化模板查询，自动追加租户过滤
+│  └─ custom/             # 预留自定义业务工具扩展目录
+│     └─ base_custom_tool.py # 自定义工具扩展抽象占位
+└─ utils/
+   └─ common_util.py      # 通用工具、时间、编码工具，移除trace_util
+
+## 代码强制规范
+1. core/response.py R结构字段与Java后端完全一致：code(int)、msg(str)、data(any)、traceId(str)；
+2. core/context.py 使用threading.local实现线程隔离，多租户数据互不干扰，存储上游传入traceId+新增sessionId；
+3. core/middleware.py 优先读取请求头X-Trace-ID、X-Tenant-ID写入上下文；无上游链路时生成仅本地使用临时标识，不向下游透传；全请求自动埋点观测；
+4. core/exception.py 拆分系统异常、租户异常、远程调用异常、LLM调用异常、新增RAG专属异常，配套统一错误枚举，错误码和Java预设码保持一致；
+5. agent/llm_client.py 严格实现三大范式： ① sync_chat：一次性同步返回完整回答 ② stream_chat：生成器SSE流式分片输出③ batch_async_chat：批量异步多会话调用骨架
+6. agent/memory全套完整逻辑：Redis存储会话、分布式锁防并发覆盖、按租户隔离会话、自动裁剪超长上下文、会话过期自动删除、冷热分层存储扩展接口；
+7. agent/rag完整强制规范：
+   - 全链路抽象分层，向量化、向量库、召回、融合、重排完全解耦，可单独替换组件；
+   - 内置RRF多路召回融合算法，支持关键词+向量双路检索；
+   - 全链路自动读取租户ID，向量知识库按租户隔离；
+   - 全流程自动埋点obs日志、span、RAG专属指标（检索耗时、召回文档数量、向量化耗时）；
+   - orchestrator、ReAct范式内置调用RAG引擎入口，可按需开启检索增强；
+   - 无硬编码行业知识库，仅通用底座，业务知识库交由外部动态加载；
+8. agent/flow/base_flow.py 统一封装执行前置/后置钩子：自动创建Span、统计耗时、上报指标、读取上下文；三大范式支持互相嵌套调用；subagent内置路由分发预留；顶层调度文件为orchestrator.py；
+9. obs观测模块三文件完整实现：日志全局替换、链路Span嵌套、内存指标计数器，所有请求、LLM调用、RAG检索、异常自动打点；日志携带sessionId维度；metrics新增RAG相关指标，预留持久化对接接口；
+10. config分层规范：拆分为base/llm/observability/storage/agent_flow/rag六份独立配置文件，禁止所有配置聚合单文件；自动读取.env开发/.env.prod生产环境；
+11. tool/base完整抽象体系：
+    - base_tool定义统一async run执行方法、工具元信息；
+    - tool_registry提供@register_tool装饰器自动注册，统一调度入口内置超时、重试、熔断容错切面；
+    - db_query_tool做安全管控，拒绝LLM原生SQL输入，强制参数模板查询，自动拼接租户过滤条件；
+    - java_backend_tool仅封装基础通用GET/POST请求，不预制任何业务API封装，减少Java应用耦合；
+    - 所有工具执行自动读取线程上下文tenantId/traceId/sessionId，自动透传、统一观测埋点；
+12. main.py 仅暴露一个流式对话接口 /api/v1/agent/stream/chat，聚合llm三大范式+memory管理+rag检索+orchestrator编排调度+tool工具调度+全观测埋点，无业务判断；
+13. 所有代码注释仅描述框架功能，不写零售业务示例，业务扩展点仅留# TODO 业务自行实现占位注释；
+14. 全程不实现任何全局traceId生成逻辑，主链路标识依赖Java网关上游透传；仅缺失时生成本地临时日志标识。

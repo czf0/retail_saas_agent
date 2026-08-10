@@ -1,0 +1,1 @@
+"""other_agent 自包含共享类型（MoveContext/FlowResult 副本）。"""
