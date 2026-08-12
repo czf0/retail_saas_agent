@@ -1,12 +1,57 @@
+<div align="center">
+
 # Retail SaaS Agent
 
 > 零售行业多租户 SaaS 业务管理平台 + AI 智能体（Agent）底座
 >
-> 以 Java 业务网关为数据中枢、Python AI Agent 为智能引擎、Vue 前端为交互入口，构建「业务系统 + 对话式智能助手」一体化的企业级解决方案。
+> 以 **Java 业务网关**为数据中枢、**Python AI Agent**为智能引擎、**Vue 前端**为交互入口，构建「业务系统 + 对话式智能助手」一体化的企业级解决方案。
+
+![Java](https://img.shields.io/badge/Java-17-orange)
+![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.2.5-brightgreen)
+![Python](https://img.shields.io/badge/Python-3.x-3776AB)
+![FastAPI](https://img.shields.io/badge/FastAPI-0.110-009688)
+![LangGraph](https://img.shields.io/badge/LangGraph-ReAct/RAG-1C3C3C)
+![Vue](https://img.shields.io/badge/Vue-3.4-42b883)
+![MySQL](https://img.shields.io/badge/MySQL-8.x-4479A1)
+![Redis](https://img.shields.io/badge/Redis-7-DC382D)
+![OpenTelemetry](https://img.shields.io/badge/OpenTelemetry-Observability-5C4EE5)
+![License](https://img.shields.io/badge/License-TBD-lightgrey)
+
+</div>
 
 ---
 
-## 一、项目简介
+## 📑 目录
+
+- [✨ 核心特性](#-核心特性)
+- [🏗️ 项目简介与架构](#️-项目简介与架构)
+- [🛠 技术栈](#-技术栈)
+- [📁 目录结构](#-目录结构)
+- [🚀 快速开始](#-快速开始)
+- [🔌 API 概览](#-api-概览)
+- [🔐 配置与安全](#-配置与安全)
+- [🧪 测试](#-测试)
+- [🗺️ 路线图](#️-路线图)
+- [🤝 贡献](#-贡献)
+- [❓ 常见问题](#-常见问题)
+- [📄 License](#-license)
+
+---
+
+## ✨ 核心特性
+
+- **🌐 多租户 / 多门店 SaaS**：数据隔离由拦截器自动注入过滤条件，业务侧零手写 SQL；Sa-Token 动态权限校验。
+- **🤖 对话式智能 Agent**：自然语言驱动经营查数、报表生成与业务操作（订单 / 商品 / 会员 / 库存 / 营销 / 退款）。
+- **🛠 动态工具平台**：Java 侧注解声明工具定义（SSOT），Python 侧动态装配调用，新增工具零成本接入、与 RBAC 权限天然对齐。
+- **🧠 检索增强生成（RAG）**：Chroma 向量 + BM25 关键词混合检索，RRF 融合 + 重排，按租户隔离、答案可溯源。
+- **✅ 人工审批（HITL）**：库存调整、退款等不可逆操作执行前需用户确认，状态持久化、可中断续接。
+- **⚡ SSE 流式对话**：三端（Java / Python / Vue）端到端流式应答，边生成边渲染。
+- **📊 全链路可观测**：OpenTelemetry 打通 Trace / Metrics / Logs，配套 Grafana 统一大盘。
+- **🔐 企业级安全治理**：多租户隔离、权限白名单、LLM 预算限流、降级收紧、统一错误码。
+
+---
+
+## 🏗️ 项目简介与架构
 
 本项目是一套**零售多租户 SaaS + 通用 AI Agent 框架**，采用前后端分离 + 异构微服务架构：
 
@@ -56,7 +101,7 @@ flowchart LR
 
 ---
 
-## 二、技术栈
+## 🛠 技术栈
 
 | 模块 | 技术 | 版本 |
 |------|------|------|
@@ -76,7 +121,7 @@ flowchart LR
 
 ---
 
-## 三、目录结构
+## 📁 目录结构
 
 ```
 retail_saas_agent/
@@ -102,40 +147,13 @@ retail_saas_agent/
 └── otel-lgtm/                    # 轻量可观测替代方案（Grafana LGTM 一体镜像）
 ```
 
-> **说明**：`service-python-agent` 下存在多个 Agent 实现目录（`agent` / `new_agent` / `other_agent` / `unified_agent` / `flow_architecture`），当前**活跃编排器锁定为 `new_agent`**（见 [main.py](file:///c:/Users/JoFend/Desktop/Agent%20Project/retail_saas_agent/service-python-agent/main.py) 顶部注释），其余为历史演进版本，作为参考保留。
+> **说明**：`service-python-agent` 下存在多个 Agent 实现目录（`agent` / `new_agent` / `other_agent` / `unified_agent` / `flow_architecture`），当前**活跃编排器锁定为 `new_agent`**（见 [main.py](service-python-agent/main.py) 顶部注释），其余为历史演进版本，作为参考保留。
 
 ---
 
-## 四、核心功能
+## 🚀 快速开始
 
-### 后端业务（Java）
-- **RBAC 权限体系**：用户 / 角色 / 菜单 / 门店，Sa-Token 鉴权 + 动态权限校验
-- **多租户隔离**：MyBatis-Plus `TenantLineInnerInterceptor` 自动注入 `tenant_id`
-- **多门店隔离**：`store_id` 白名单机制自动过滤门店数据
-- **零售业务域**：商品（分类 / SKU / 评价）、会员（标签 / 积分）、订单、促销、优惠券、退款、库存、报表、统计
-- **知识库管理**：文档上传（多文件 + 类型/大小管控）、列表检索，支撑下游 RAG
-- **Agent 支撑**：作为工具调用 SSOT，向 Python 提供统一数据访问；`X-Internal-Secret` 内部鉴权
-
-### AI 引擎（Python）
-- **流式对话**：`/api/v1/agent/stream/chat`（SSE），编排器承载全生命周期
-- **HITL 人工审批**：破坏性工具调用需人工确认，`/api/v1/agent/stream/resume` 恢复
-- **RAG 检索增强**：Chroma 向量 + BM25 关键词混合检索 + 融合（RRF）+ 重排序
-- **多轮记忆**：会话短期记忆 + 长期记忆（按类别槽位、置信度入库、巩固）
-- **工具调用**：动态加载 Java 后端工具定义（启动同步 SSOT），LLM 决策调用
-- **编排范式**：ReAct / Plan-Exec / Workflow 多范式路由
-- **可观测**：OpenTelemetry 全链路 Trace + 业务 Metrics
-
-### 前端
-- 登录鉴权、动态菜单路由、个人中心
-- 系统管理（用户 / 角色 / 门店 / 租户 / 菜单 / 字典 / 配置 / 操作日志）
-- 业务管理（商品 / 会员 / 订单 / 促销 / 优惠券 / 积分 / 退款 / 库存 / 报表）
-- Agent 智能对话 + 知识库管理 + 数据大盘
-
----
-
-## 五、快速开始
-
-### 5.1 前置依赖
+### 前置依赖
 
 | 依赖 | 说明 |
 |------|------|
@@ -147,7 +165,7 @@ retail_saas_agent/
 | Redis | 缓存 / 会话 / Agent 状态持久化 |
 | Docker + Docker Compose | 可观测体系（可选） |
 
-### 5.2 数据库初始化
+### 1. 数据库初始化
 
 ```bash
 # 创建数据库
@@ -157,7 +175,7 @@ CREATE DATABASE retail_business DEFAULT CHARACTER SET utf8mb4;
 mysql -uroot -p retail_business < service-java-business/src/main/resources/sql/retail_business.sql
 ```
 
-### 5.3 启动后端（Java, :8080）
+### 2. 启动后端（Java, :8080）
 
 ```bash
 cd service-java-business
@@ -167,7 +185,7 @@ cd service-java-business
 mvn spring-boot:run
 ```
 
-### 5.4 启动 AI 引擎（Python, :8000）
+### 3. 启动 AI 引擎（Python, :8000）
 
 ```bash
 cd service-python-agent
@@ -185,7 +203,7 @@ uvicorn main:app --host 127.0.0.1 --port 8000
 
 > 启动会同步 Java `/tools/registry` 工具定义并执行 LLM / 内部密钥等配置校验；Java 不可用时降级不阻断启动。
 
-### 5.5 启动前端（:5173）
+### 4. 启动前端（:5173）
 
 ```bash
 cd frontend
@@ -195,7 +213,7 @@ npm run dev        # 开发模式，代理 /api → http://127.0.0.1:8080
 # npm run build    # 生产构建（vue-tsc 类型检查 + vite build）
 ```
 
-### 5.6 启动可观测体系（可选）
+### 5. 启动可观测体系（可选）
 
 ```bash
 # 方案一：完整可观测栈（OTel Collector + Tempo + Prometheus + Grafana）
@@ -207,7 +225,19 @@ cd otel-lgtm && docker compose up -d
 
 ---
 
-## 六、服务端口与访问地址
+## 🔌 API 概览
+
+| 方法 | 路径 | 说明 |
+|------|------|------|
+| POST | `/api/v1/agent/stream/chat` | 流式对话（SSE） |
+| POST | `/api/v1/agent/stream/resume` | HITL 审批恢复（SSE） |
+| GET | `/api/v1/agent/tools` | 已注册工具列表（调试） |
+| GET | `/api/v1/agent/skills` | 已注册 Skill 列表（调试） |
+| GET | `/api/v1/agent/metrics` | 内存指标快照（调试） |
+| GET | `/metrics` | Prometheus exposition 格式指标 |
+| GET | `/health` | 健康检查 |
+
+### 服务端口
 
 | 服务 | 地址 | 说明 |
 |------|------|------|
@@ -220,25 +250,11 @@ cd otel-lgtm && docker compose up -d
 | Grafana | http://localhost:3000 | 大盘（obs-stack 默认 `admin/admin`） |
 | Redis | :6379（RedisInsight :8001） | 缓存 / 会话 |
 
----
-
-## 七、AI 引擎 API 概览
-
-| 方法 | 路径 | 说明 |
-|------|------|------|
-| POST | `/api/v1/agent/stream/chat` | 流式对话（SSE） |
-| POST | `/api/v1/agent/stream/resume` | HITL 审批恢复（SSE） |
-| GET | `/api/v1/agent/tools` | 已注册工具列表（调试） |
-| GET | `/api/v1/agent/skills` | 已注册 Skill 列表（调试） |
-| GET | `/api/v1/agent/metrics` | 内存指标快照（调试） |
-| GET | `/metrics` | Prometheus exposition 格式指标 |
-| GET | `/health` | 健康检查 |
-
 > 另含 Java → Python 内部服务接口（知识库同步 / 文件解析 / 记忆抽取），仅供后端内部调用，通过 `X-Internal-Secret` 鉴权。
 
 ---
 
-## 八、配置与安全说明
+## 🔐 配置与安全
 
 - **密钥不入库**：`service-python-agent/.env` 与 `.env.prod` 包含 `LLM_API_KEY`、`INTERNAL_SECRET` 等敏感项，已被 `.gitignore` 排除，**必须从本地 `.env` 读取**。
 - **内部调用鉴权**：Python 回调 Java 使用 `X-Internal-Secret` 建立临时登录态，避免透传用户 Token，仅限内网。
@@ -247,9 +263,43 @@ cd otel-lgtm && docker compose up -d
 
 ---
 
-## 九、常见问题
+## 🧪 测试
+
+| 模块 | 命令 | 说明 |
+|------|------|------|
+| 后端（Java） | `cd service-java-business && mvn test` | 单元测试 |
+| 前端（Vue） | `cd frontend && npm run build` | 生产构建（含 `vue-tsc` 类型检查 + Vite build） |
+| AI 引擎（Python） | `cd service-python-agent && uvicorn main:app --port 8000` | 启动即 `fail-fast` 校验必配项与 LLM/密钥连通性 |
+
+> Python 侧当前以「启动配置校验 + 运行期接口自检」为主，尚未引入独立单测框架；如需补充可纳入 [路线图](#️-路线图)。
+
+---
+
+## 🗺️ 路线图
+
+> 基于项目经验与扩展点提炼，标注状态：✅ 已完成 · 🚧 进行中 · 📋 规划中
+
+- ✅ **三端 SSE 流式问答链路**：Java 业务后端 / Python 编排 / Vue 前端端到端打通。
+- ✅ **动态工具平台 + HITL 人工审批**：破坏性操作默认不放行、状态可恢复。
+- ✅ **混合检索 RAG**：向量 + BM25 + 融合 + 重排，多租户隔离、答案可溯源。
+- ✅ **可观测与审计**：OpenTelemetry 全链路 + 审计留痕。
+- 🚧 **token 预算真正限流**：将 token 预算接入执行器，实现按请求截断/限流（当前为预留未消费）。
+- 📋 **多租户 / 角色差异化预算**：按 `tenant_id` / `role` 分级限流。
+- 📋 **长期记忆升级**：显式记忆抽取（摘要/实体）+ 按用户维度向量记忆。
+- 📋 **评测与回归闭环**：沉淀坏例标注 + 自动回归数据集，量化幻觉抑制与意图路由准确率。
+- 📋 **多 Agent 协同**：规划器 + 多执行器编排，配全局预算控制。
+- 📋 **观察体系大盘指标**：搭建P95、P99、多维度Token损耗、RAG召回准确率等大盘指标。
+---
+
+## ❓ 常见问题
 
 - **后端启动失败**：检查 MySQL / Redis 连接配置，及是否已执行数据库初始化脚本。
 - **Python 启动报 `FATAL`**：为启动前配置校验，按提示补齐 `LLM_API_KEY`、`INTERNAL_SECRET` 等必配项。
 - **前端接口 404**：确认后端端口与 `vite.config.ts` 代理 `target` 一致（默认 `http://127.0.0.1:8080`）。
 - **Trace 看不到**：确认 `obs-stack` 已启动且 Python 的 OTel 导出地址指向 `127.0.0.1:4317`。
+
+<div align="center">
+
+**Retail SaaS Agent** · 让运营用一句话搞定经营分析与业务操作
+
+</div>
